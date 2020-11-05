@@ -9,11 +9,12 @@ class GameScene(Scene):
         pass
 
     def update(self, events, world):
-        pass
+        world.process_all_systems()
 
     def render(self, world):
-        screen = world['context']['screen']
-        background = world['context']['background']
+        context = world.find_only('context')
+        screen = context['screen']
+        background = context['background']
 
         # text setup
         text = self.font.render("NEW GAME", 1, (10, 10, 10))
@@ -21,6 +22,7 @@ class GameScene(Scene):
         
         screen.blit(background, (0, 0))
         screen.blit(text,text_pos)
+
         
     def render_previous(self):
         return False

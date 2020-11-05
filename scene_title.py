@@ -7,8 +7,11 @@ class TitleScene(Scene):
         self.font = pygame.font.Font(None, 36)
     
     def setup(self, world):
-        background = world['context']['background']
-        self.text = self.font.render(world['resources']['title'], 1, (10, 10, 10))
+        context = world.find_only('context')
+        settings = world.find_only('settings')
+        background = context['background']
+        
+        self.text = self.font.render(settings['title'], 1, (10, 10, 10))
         self.text_pos = self.text.get_rect(centerx=background.get_width() // 2)
     
     def update(self, events, world):
@@ -21,8 +24,10 @@ class TitleScene(Scene):
         return SceneManager.nothing()
 
     def render(self, world):
-        screen = world['context']['screen']
-        background = world['context']['background']
+        context = world.find_only('context')
+
+        screen = context['screen']
+        background = context['background']
 
         # Blit the text to the screen over top of the background surface
         screen.blit(background, (0, 0))

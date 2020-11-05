@@ -76,6 +76,7 @@ class SceneManager():
             self._render_all_scenes(rest, world)
         last.render(world)
 
+    # Helper methods to generate a sceenswitch event for you instead of having to create one inline
     @staticmethod
     def nothing():
         return { "type": SceneSwitch.Nothing }
