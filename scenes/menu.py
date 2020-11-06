@@ -1,7 +1,7 @@
 import pygame
 
 from button import Button
-import game_events
+from game_events import NEW_GAME, CONTINUE, OPTIONS, QUIT
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 
@@ -12,8 +12,6 @@ class MenuScene(Scene):
 
     def setup(self, world):
         context = world.find_component("context")
-        settings = world.find_component("settings")
-        screen = context["screen"]
         background = context["background"]
 
         # menu setup
@@ -41,7 +39,7 @@ class MenuScene(Scene):
         self.menu.update(events)
 
         for event in events:
-            if event.type == game_events.NEW_GAME:
+            if event.type == NEW_GAME:
                 return SceneManager.new_root(GameScene())
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return SceneManager.pop()
@@ -63,19 +61,19 @@ class MenuScene(Scene):
         action = btn.text.lower()
 
         if action == "new game":
-            pygame.event.post(pygame.event.Event(game_events.NEW_GAME))
+            pygame.event.post(pygame.event.Event(NEW_GAME))
             return
 
         if action == "continue":
-            pygame.event.post(pygame.event.Event(game_events.CONTINUE))
+            pygame.event.post(pygame.event.Event(CONTINUE))
             return
 
         if action == "options":
-            pygame.event.post(pygame.event.Event(game_events.OPTIONS))
+            pygame.event.post(pygame.event.Event(OPTIONS))
             return
 
         if action == "quit":
-            pygame.event.post(pygame.event.Event(game_events.QUIT))
+            pygame.event.post(pygame.event.Event(QUIT))
             return
 
         # if we get here with an empty action somehow, just do nothing

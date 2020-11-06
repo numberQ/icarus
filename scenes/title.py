@@ -2,7 +2,7 @@ import pygame
 
 from scene import Scene, SceneManager
 from scenes.menu import MenuScene
-import game_events
+from game_events import SCENE_REFOCUS
 
 
 class TitleScene(Scene):
@@ -23,7 +23,7 @@ class TitleScene(Scene):
     def update(self, events, world):
         # If a key press is detected, push the next scene
         for event in events:
-            if event.type == game_events.SCENE_REFOCUS:
+            if event.type == SCENE_REFOCUS:
                 self._transition_back_to(events, world)
             if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 self._transition_away_from(events, world)
