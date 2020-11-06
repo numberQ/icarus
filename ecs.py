@@ -31,7 +31,7 @@ class World:
     def find_component(self, component):
         filtered = self.filter(component)
         return filtered[0][component] if filtered is not [] else None
-    
+
     # Query method for when you only have one entity with a given component. It returns the entity which contains that one component
     # Useful for things like finding the player entity so you can say:
     #     WORLD.find_entity('player')

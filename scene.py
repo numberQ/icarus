@@ -1,6 +1,9 @@
 from enum import Enum
-import game_events
+
 import pygame
+
+import game_events
+
 
 # All scenes should implement this class's interface
 class Scene:

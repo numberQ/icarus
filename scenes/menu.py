@@ -1,7 +1,7 @@
 import pygame
 
 from button import Button
-from game_events import NEW_GAME, CONTINUE, OPTIONS, QUIT
+from game_events import CONTINUE, NEW_GAME, OPTIONS, QUIT
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 
