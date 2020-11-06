@@ -1,19 +1,14 @@
+# Hide the pygame support prompt
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 from scene import SceneManager
 from scene_title import TitleScene
+from common_components import ContextComponent
 
 import pygame
 
 from ecs import WORLD, Component
-
-class ContextComponent(Component):
-    def __init__(self, screen, clock, background):
-        metadata = {
-            "screen": screen,
-            "clock": clock,
-            "background": background,
-            "running": True,
-        }
-        Component.__init__(self, "context", metadata)
 
 def main():
     # Initialize pygame before we do anything else
@@ -63,7 +58,5 @@ def main():
         manager.switch(switch_event, WORLD)
 
 
-
 if __name__ == "__main__":
     main()
-
