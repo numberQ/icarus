@@ -1,5 +1,5 @@
 from scene import Scene, SceneManager
-from scene_game import GameScene
+from scenes.menu import MenuScene
 import pygame
 
 class TitleScene(Scene):
@@ -17,8 +17,8 @@ class TitleScene(Scene):
     def update(self, events, world):
         # If a key press is detected, push the next scene
         for event in events:
-            if event.type == pygame.KEYDOWN:
-                return SceneManager.replace(GameScene())
+            if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return SceneManager.replace(MenuScene())
 
         # Always just do nothing unless a 
         return SceneManager.nothing()

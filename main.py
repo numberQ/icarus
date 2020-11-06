@@ -3,10 +3,11 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 from scene import SceneManager
-from scene_title import TitleScene
 from common_components import ContextComponent
+from scenes.title import TitleScene
 
 import pygame
+import sys
 
 from ecs import WORLD, Component
 
