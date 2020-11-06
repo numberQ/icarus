@@ -1,5 +1,6 @@
 from ecs import Component
 
+
 class ContextComponent(Component):
     def __init__(self, screen, clock, background):
         metadata = {

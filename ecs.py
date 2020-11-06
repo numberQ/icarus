@@ -1,13 +1,16 @@
-import uuid
 import json
+import uuid
 from typing import Dict
+
 
 class World:
     eindex = {}  # Index mapping entity IDs to entity objects
     cindex = {}  # Index mapping component names to entity objects
-    systems = [] # List of all systems
-    subscriptions = {} # Map of which systems are subscribed to which events
-    events_to_send = [] # List to buffer all events in before they are dispatched to systems
+    systems = []  # List of all systems
+    subscriptions = {}  # Map of which systems are subscribed to which events
+    events_to_send = (
+        []
+    )  # List to buffer all events in before they are dispatched to systems
 
     # This function generates a new entity within this world. The entity is tracked inside this worlds mappings
     def gen_entity(self):
@@ -15,7 +18,7 @@ class World:
         entity = Entity(id)
         self.eindex[id] = entity
         return entity
-    
+
     # Query method which returns a list of all entities which have a given component. Useful for building systems
     def filter(self, component):
         entities = self.cindex.get(component)
@@ -39,7 +42,7 @@ class World:
     # Registers a system with the world. This allows events to be dispatched to it, as well as run through the helper method
     def register_system(self, system):
         self.systems.append(system)
-    
+
     # Unregisters a system with the world so it will stop being run
     def unregister_system(self, system):
         self.systems.remove(system)
@@ -53,7 +56,7 @@ class World:
     # Internal helper function to dispatch the buffered events to the proper system. It's called right before the systems are processed.
     def _dispatch_events(self):
         for event in self.events_to_send:
-            event_type = event['type']
+            event_type = event["type"]
             for subscriber in self.subscriptions[event_type]:
                 subscriber.events.append(event)
         self.events_to_send = []
@@ -69,7 +72,7 @@ class Component:
     def __init__(self, metatype: str, metadata: Dict):
         self.metatype = metatype
         self.__dict__.update(metadata)
-    
+
     # Method that allows indexing an entity like a dictionary. Makes IDE experience better since static analyzers can't see fields created at runtime
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -83,7 +86,7 @@ class Component:
         return str(self.__dict__)
 
     @classmethod
-    def load_from_json(cls, filename) -> 'Component':
+    def load_from_json(cls, filename) -> "Component":
         """
         Allows loading a Component from a JSON file.
         MUST contain a string "metatype" field, and an object "metadata" field.
@@ -101,15 +104,17 @@ class Component:
         :param filename: name of the JSON file, without the .json
         :return: a new Component instance using the usual construtor
         """
-        with open(filename + '.json', 'r') as f:
+        with open(filename + ".json", "r") as f:
             loaded_json = json.load(f)
-            metatype = loaded_json['metatype']
-            metadata = loaded_json['metadata']
+            metatype = loaded_json["metatype"]
+            metadata = loaded_json["metadata"]
             return Component(metatype, metadata)
+
 
 # Create a singleton state for the world. This bundles up all the class local methods and datums into one
 # singleton instead of many small singletons spread across several classes
 WORLD = World()
+
 
 # The Entity class defines a single entity in our system composed
 # of multiple components. At its heart, an Entity object is simply
@@ -201,6 +206,7 @@ class Entity(object):
     def __repr__(self):
         return str(self.__dict__)
 
+
 # The final class that completes our ECS implementation is the System
 # class for defining systems that update the world.
 #
@@ -283,5 +289,3 @@ class System(object):
 
     def process(self, world):
         pass
-
-

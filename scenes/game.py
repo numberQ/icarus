@@ -1,8 +1,10 @@
-from scene import Scene
+import math
+
 import pygame
 from pygame.sprite import Sprite
+
 from ecs import Component, System
-import math
+from scene import Scene
 
 
 class GraphicComponent(Component):
@@ -151,9 +153,9 @@ class GameScene(Scene):
             player_entity.rotation.angle = max(angle, -90)
 
     def render(self, world):
-        context = world.find_only('context')
-        screen = context['screen']
-        background = context['background']
+        context = world.find_only("context")
+        screen = context["screen"]
+        background = context["background"]
 
         graphical_entities = world.filter('graphic')
         player_entity = world.filter('player')[0]

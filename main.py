@@ -1,15 +1,27 @@
 # Hide the pygame support prompt
 import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
-from scene import SceneManager
-from common_components import ContextComponent
-from scenes.title import TitleScene
 
 import pygame
-import sys
 
+from common_components import ContextComponent
 from ecs import WORLD, Component
+from scene import SceneManager
+from scenes.title import TitleScene
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
+
+
+class ContextComponent(Component):
+    def __init__(self, screen, clock, background):
+        metadata = {
+            "screen": screen,
+            "clock": clock,
+            "background": background,
+            "running": True,
+        }
+        Component.__init__(self, "context", metadata)
+
 
 def main():
     # Initialize pygame before we do anything else
@@ -20,13 +32,13 @@ def main():
     WORLD.gen_entity().attach(settings)
 
     # Set up the pygame window
-    screen = pygame.display.set_mode((settings['height'], settings['width']))
-    pygame.display.set_caption(settings['title'])
+    screen = pygame.display.set_mode((settings["height"], settings["width"]))
+    pygame.display.set_caption(settings["title"])
 
     # Store our dynamic resources that are created at runtime in the game world
     background = pygame.Surface(screen.get_size())
     background = background.convert()
-    background.fill((200,200,200))
+    background.fill((200, 200, 200))
 
     context = ContextComponent(screen, pygame.time.Clock(), background)
     game = WORLD.gen_entity()
@@ -40,13 +52,13 @@ def main():
 
     # BIG GAME LOOP
     while game["context"]["running"]:
-        game['context']['clock'].tick(60)
+        game["context"]["clock"].tick(60)
 
         # Process game wide events, most likely only QUIT
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
-                game['context']['running'] = False
+                game["context"]["running"] = False
 
         # Update the current scene
         switch_event = manager.update(events, WORLD)

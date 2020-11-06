@@ -1,10 +1,11 @@
 import pygame
 
+
 class Button(pygame.sprite.Sprite):
     # 1) no need to have 4 parameters for position and size, use pygame.Rect instead
     # 2) let the Button itself handle which color it is
-    # 3) give a callback function to the button so it can handle the click itself 
-    def __init__(self, color, color_hover, rect, callback, text='', outline=None):
+    # 3) give a callback function to the button so it can handle the click itself
+    def __init__(self, color, color_hover, rect, callback, text="", outline=None):
         super().__init__()
         self.font = pygame.font.Font(None, 36)
         self.text = text
@@ -38,8 +39,8 @@ class Button(pygame.sprite.Sprite):
             img.fill(color)
 
         # render the text once here instead of every frame
-        if text != '':
-            text_surf = self.font.render(text, 1, pygame.Color('black'))
+        if text != "":
+            text_surf = self.font.render(text, 1, pygame.Color("black"))
             # again, see how easy it is to center stuff using Rect's attributes like 'center'
             text_rect = text_surf.get_rect(center=rect.center)
             img.blit(text_surf, text_rect)
