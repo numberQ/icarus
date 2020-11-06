@@ -1,8 +1,9 @@
 import math
 
 import pygame
-from ecs import Component, System
 from pygame.sprite import Sprite
+
+from ecs import Component, System
 from scene import Scene
 
 

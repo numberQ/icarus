@@ -1,4 +1,5 @@
 import pygame
+
 from common_components import ContextComponent
 from ecs import WORLD, Component
 from scene import SceneManager
