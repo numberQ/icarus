@@ -2,25 +2,12 @@
 import os
 
 import pygame
-
 from common_components import ContextComponent
 from ecs import WORLD, Component
 from scene import SceneManager
 from scenes.title import TitleScene
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
-
-
-class ContextComponent(Component):
-    def __init__(self, screen, clock, background):
-        metadata = {
-            "screen": screen,
-            "clock": clock,
-            "background": background,
-            "running": True,
-        }
-        Component.__init__(self, "context", metadata)
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 
 def main():

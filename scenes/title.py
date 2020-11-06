@@ -1,5 +1,4 @@
 import pygame
-
 from scene import Scene, SceneManager
 from scenes.menu import MenuScene
 
