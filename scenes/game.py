@@ -171,12 +171,12 @@ class GameScene(Scene):
         text = self.font.render(
             f"angle: {player_entity.velocity.angle}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 500))
+        screen.blit(text, (10, 678))
 
         text = self.font.render(
             f"speed: {player_entity.velocity.speed}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 550))
+        screen.blit(text, (10, 728))
 
     def render_previous(self):
         return False
