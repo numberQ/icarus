@@ -1,18 +1,19 @@
-from scene import Scene
+import math
+
 import pygame
 from pygame.sprite import Sprite
+
 from ecs import Component, System
-import math
+from scene import Scene
 
 
 class GraphicComponent(Component):
     """
     For visible entities that have a sprite.
     """
+
     def __init__(self, sprite):
-        metadata = {
-            "sprite": sprite
-        }
+        metadata = {"sprite": sprite}
         Component.__init__(self, "graphic", metadata)
 
 
@@ -21,11 +22,9 @@ class PositionComponent(Component):
     For entities that exist somewhere on the coordinate grid
     (i.e., anything physically in the game world).
     """
+
     def __init__(self, x, y):
-        metadata = {
-            "x": x,
-            "y": y
-        }
+        metadata = {"x": x, "y": y}
         Component.__init__(self, "position", metadata)
 
 
@@ -33,11 +32,9 @@ class VelocityComponent(Component):
     """
     For entities with some kind of physics-based movement.
     """
+
     def __init__(self, speed, angle):
-        metadata = {
-            "speed": speed,
-            "angle": angle
-        }
+        metadata = {"speed": speed, "angle": angle}
         Component.__init__(self, "velocity", metadata)
 
 
@@ -46,10 +43,9 @@ class RotationComponent(Component):
     For entities that rotate. Affects both graphics and physics.
     Maybe makes more sense as a RotationalVelocityComponent or something, that adds its speed to VelocityComponent's angle?
     """
+
     def __init__(self, angle):
-        metadata = {
-            "angle": angle
-        }
+        metadata = {"angle": angle}
         Component.__init__(self, "rotation", metadata)
 
 
@@ -57,6 +53,7 @@ class PlayerComponent(Component):
     """
     For the player entity. Reacts to user inputs.
     """
+
     def __init__(self):
         Component.__init__(self, "player", {})
 
@@ -65,6 +62,7 @@ class GlidingComponent(Component):
     """
     For any entity that requires gliding physics. Allows the GlidingSystem to find it.
     """
+
     def __init__(self):
         Component.__init__(self, "gliding", {})
 
@@ -72,14 +70,14 @@ class GlidingComponent(Component):
 class GlidingSystem(System):
     def __init__(self):
         super().__init__()
-        self.subscribe('move')
+        self.subscribe("move")
         self.angle_magnitude = 0.03
 
     def process(self, world):
         # We don't actually need the movement events, but this clears the queue for the next frame
         self.pending()
 
-        gliders = world.filter('gliding')
+        gliders = world.filter("gliding")
 
         # All gliders should have velocity, position, and rotation components
         for glider in gliders:
@@ -120,7 +118,9 @@ class GameScene(Scene):
 
         # Player entity setup
         player_entity = world.gen_entity()
-        player_entity.attach(GraphicComponent(PlayerSprite("resources/icarus_himself.png")))
+        player_entity.attach(
+            GraphicComponent(PlayerSprite("resources/icarus_himself.png"))
+        )
         player_entity.attach(PositionComponent(100, 100))
         player_entity.attach(VelocityComponent(1, 0))
         player_entity.attach(RotationComponent(0))
@@ -131,11 +131,11 @@ class GameScene(Scene):
         world.register_system(GlidingSystem())
 
     def update(self, events, world):
-        world.inject_event({'type': 'move'})
+        world.inject_event({"type": "move"})
         world.process_all_systems()
 
         # There will only ever be one player entity, unless scope drastically changes
-        player_entity = world.filter('player')[0]
+        player_entity = world.filter("player")[0]
 
         keys = pygame.key.get_pressed()
 
@@ -151,12 +151,12 @@ class GameScene(Scene):
             player_entity.rotation.angle = max(angle, -90)
 
     def render(self, world):
-        context = world.find_only('context')
-        screen = context['screen']
-        background = context['background']
+        context = world.find_only("context")
+        screen = context["screen"]
+        background = context["background"]
 
-        graphical_entities = world.filter('graphic')
-        player_entity = world.filter('player')[0]
+        graphical_entities = world.filter("graphic")
+        player_entity = world.filter("player")[0]
 
         screen.blit(background, (0, 0))
 
@@ -168,10 +168,14 @@ class GameScene(Scene):
             screen.blit(rotated_image, (entity.position.x, entity.position.y))
 
         # text
-        text = self.font.render(f"angle: {player_entity.velocity.angle}", True, (10, 10, 10))
+        text = self.font.render(
+            f"angle: {player_entity.velocity.angle}", True, (10, 10, 10)
+        )
         screen.blit(text, (10, 500))
 
-        text = self.font.render(f"speed: {player_entity.velocity.speed}", True, (10, 10, 10))
+        text = self.font.render(
+            f"speed: {player_entity.velocity.speed}", True, (10, 10, 10)
+        )
         screen.blit(text, (10, 550))
 
     def render_previous(self):

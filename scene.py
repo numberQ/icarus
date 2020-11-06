@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 # All scenes should implement this class's interface
 class Scene:
     # This method get called once when the scene is first added to the game. This allows the Scene to do one time setup using resources stored in the world
@@ -20,6 +21,7 @@ class Scene:
     def render_previous(self):
         print("You must override the render_previous() method")
 
+
 # Simple enum for switching between scenes
 class SceneSwitch(Enum):
     Nothing = 0
@@ -27,8 +29,9 @@ class SceneSwitch(Enum):
     Push = 2
     Replace = 3
 
+
 # Class which acts like a stack of scenes, allowing switching and overlaying between them
-class SceneManager():
+class SceneManager:
     scenes = []
 
     # Initialize the scene manager with an initial scene using the given world
@@ -62,33 +65,32 @@ class SceneManager():
         # Just in case the update function didn't return any state transition, default to do nothing
         return self._current().update(events, world) or self.nothing()
 
-
     # Calls render on all appropriate scenes
     def render(self, world):
-       self._render_all_scenes(self.scenes, world) 
+        self._render_all_scenes(self.scenes, world)
 
     # Pravate helper to render all appropriate scenes starting from the bottom up (uses recursion to bottom up traverse)
     def _render_all_scenes(self, scenes, world):
         assert len(scenes) > 0
         last = scenes[-1]
         rest = scenes[:-1]
-        if last.render_previous() == True:
+        if last.render_previous() is True:
             self._render_all_scenes(rest, world)
         last.render(world)
 
     # Helper methods to generate a sceenswitch event for you instead of having to create one inline
     @staticmethod
     def nothing():
-        return { "type": SceneSwitch.Nothing }
+        return {"type": SceneSwitch.Nothing}
 
     @staticmethod
     def pop():
-        return { "type": SceneSwitch.Pop }
+        return {"type": SceneSwitch.Pop}
 
     @staticmethod
     def push(scene):
-        return { "type": SceneSwitch.Push, "scene": scene }
+        return {"type": SceneSwitch.Push, "scene": scene}
 
     @staticmethod
     def replace(scene):
-        return { "type": SceneSwitch.Replace, "scene": scene }
+        return {"type": SceneSwitch.Replace, "scene": scene}

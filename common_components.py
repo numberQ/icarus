@@ -1,5 +1,6 @@
 from ecs import Component
 
+
 class ContextComponent(Component):
     def __init__(self, screen, clock, background):
         metadata = {
@@ -10,19 +11,14 @@ class ContextComponent(Component):
         }
         Component.__init__(self, "context", metadata)
 
+
 class SpriteComponent(Component):
     def __init__(self, sprite):
-        metadata = {
-            "sprite": sprite,
-        }
+        metadata = {"sprite": sprite}
         Component.__init__(self, "sprite", metadata)
+
 
 class MovementComponent(Component):
     def __init__(self, xvel=0, yvel=0, xaccel=0, yaccel=0):
-        metadata = {
-            "xvel": xvel,
-            "yvel": yvel,
-            "xaccel": xaccel,
-            "yaccel": yaccel,
-        }
+        metadata = {"xvel": xvel, "yvel": yvel, "xaccel": xaccel, "yaccel": yaccel}
         Component.__init__(self, "movement", metadata)
