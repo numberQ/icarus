@@ -7,18 +7,27 @@ from game_events import SCENE_REFOCUS
 
 class TitleScene(Scene):
     def __init__(self):
-        self.title = pygame.font.Font(None, 52)
-        self.font = pygame.font.Font(None, 36)
+        self.title_font = pygame.font.Font(None, 52)
+        self.regular_font = pygame.font.Font(None, 36)
 
     def setup(self, world):
         context = world.find_component("context")
         settings = world.find_component("settings")
         background = context["background"]
 
-        self.text = self.title.render(settings["title"], 1, (10, 10, 10))
-        self.text_pos = self.text.get_rect(centerx=background.get_width() // 2, centery=50)
-        self.push_anything = self.font.render("Press any key", 1, (10, 10, 10))
-        self.push_anything_pos = self.push_anything.get_rect(centerx=background.get_width() // 2, centery=background.get_height()//3 * 2)
+        # Create a sprite for the title
+        self.title = pygame.sprite.Sprite()
+        self.title.image = self.title_font.render(settings["title"], 1, (10, 10, 10))
+        self.title.rect = self.title.image.get_rect(centerx=background.get_width() // 2, centery=50)
+
+        # Create a sprite for the Press any key prompt
+        self.push_anything = pygame.sprite.Sprite()
+        self.push_anything.image = self.regular_font.render("Press any key", 1, (10, 10, 10))
+        self.push_anything.rect = self.push_anything.image.get_rect(centerx=background.get_width() // 2, centery=background.get_height()//3 * 2)
+
+        # Put all the sprites we want to render into a sprite group for easy adds and removes
+        self.title_screen = pygame.sprite.Group()
+        self.title_screen.add(self.title, self.push_anything)
 
     def update(self, events, world):
         # If a key press is detected, push the next scene
@@ -31,13 +40,11 @@ class TitleScene(Scene):
     
     # This helps us hide things we want when we push a new scene
     def _transition_away_from(self, events, world):
-        self.push_anything_pos.y=-100  # Simple hiding technique
+        self.title_screen.remove(self.push_anything)
     
     # This helps us get everything back in the right spot when we transition back to our scene
     def _transition_back_to(self, events, world):
-        context = world.find_component("context")
-        background = context["background"]
-        self.push_anything_pos.centery = background.get_height()//3 * 2
+        self.title_screen.add(self.push_anything)
 
     def render(self, world):
         context = world.find_component("context")
@@ -47,8 +54,7 @@ class TitleScene(Scene):
 
         # Blit the text to the screen over top of the background surface
         screen.blit(background, (0, 0))
-        screen.blit(self.text, self.text_pos)
-        screen.blit(self.push_anything, self.push_anything_pos)
+        self.title_screen.draw(screen)
 
     def render_previous(self):
         return False
