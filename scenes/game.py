@@ -103,7 +103,7 @@ class ForceSystem(System):
                     pow(magnitude, 2)
                     + pow(current_accel, 2)
                     + 2 * magnitude * current_accel * math.cos(theta)
-                )
+                ) * math.copysign(1, magnitude)
                 new_angle = math.degrees(theta / 2)
 
                 entity.physics.acceleration = new_accel
@@ -154,7 +154,7 @@ class GlidingSystem(System):
 
         gliders = world.filter("gliding")
 
-        # All gliders should have velocity, position, and rotation components
+        # All gliders should have physics and rotation components
         for glider in gliders:
 
             # Trig math requires radians, so let's convert
@@ -200,9 +200,15 @@ class GameScene(Scene):
 
     def update(self, events, world):
 
+        # Gravity comes first
         world.inject_event({"type": "physics_force", "magnitude": 0, "angle": 90})
+
+        # Then gliding, which translates rotation into acceleration
         world.inject_event({"type": "glide"})
+
+        # Finally, we add movement after any events that could affect acceleration
         world.inject_event({"type": "move"})
+
         world.process_all_systems()
 
         # There will only ever be one player entity, unless scope drastically changes
