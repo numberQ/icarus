@@ -62,7 +62,7 @@ class World:
     def process_all_systems(self):
         self._dispatch_events()
         for system in self.systems:
-            system.process()
+            system.process(WORLD)
 
 
 class Component:
