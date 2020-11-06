@@ -1,29 +1,18 @@
 import pygame
 
 from button import Button
-from events import CONTINUE, NEW_GAME, OPTIONS, QUIT
+from game_events import CONTINUE, NEW_GAME, OPTIONS, QUIT
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 
 
 class MenuScene(Scene):
     def __init__(self):
-        self.font = pygame.font.Font(None, 36)
         self.menu = pygame.sprite.Group()
 
     def setup(self, world):
-        context = world.find_only("context")
-        settings = world.find_only("settings")
-        screen = context["screen"]
+        context = world.find_component("context")
         background = context["background"]
-
-        # bg
-        screen.blit(background, (0, 0))
-
-        # title
-        self.text = self.font.render(settings["title"], 1, (10, 10, 10))
-        self.text_pos = self.text.get_rect(centerx=background.get_width() // 2)
-        screen.blit(self.text, self.text_pos)
 
         # menu setup
         men = ["New Game", "Continue", "Options", "Quit"]
@@ -51,19 +40,21 @@ class MenuScene(Scene):
 
         for event in events:
             if event.type == NEW_GAME:
-                return SceneManager.replace(GameScene())
+                return SceneManager.new_root(GameScene())
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return SceneManager.pop()
 
         # I dunno what i'm doing lol
         world.process_all_systems()
 
     def render(self, world):
-        context = world.find_only("context")
+        context = world.find_component("context")
         screen = context["screen"]
 
         self.menu.draw(screen)
 
     def render_previous(self):
-        return False
+        return True
 
     def menu_action(self, btn):
         # if the user picked new game
