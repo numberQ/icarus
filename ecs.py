@@ -8,9 +8,8 @@ class World:
     cindex = {}  # Index mapping component names to entity objects
     systems = []  # List of all systems
     subscriptions = {}  # Map of which systems are subscribed to which events
-    events_to_send = (
-        []
-    )  # List to buffer all events in before they are dispatched to systems
+    # List to buffer all events in before they are dispatched to systems
+    events_to_send = []
 
     # This function generates a new entity within this world. The entity is tracked inside this worlds mappings
     def gen_entity(self):
