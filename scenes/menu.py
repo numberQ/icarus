@@ -1,29 +1,20 @@
 import pygame
 
 from button import Button
-from events import CONTINUE, NEW_GAME, OPTIONS, QUIT
+import game_events
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 
 
 class MenuScene(Scene):
     def __init__(self):
-        self.font = pygame.font.Font(None, 36)
         self.menu = pygame.sprite.Group()
 
     def setup(self, world):
-        context = world.find_only("context")
-        settings = world.find_only("settings")
+        context = world.find_component("context")
+        settings = world.find_component("settings")
         screen = context["screen"]
         background = context["background"]
-
-        # bg
-        screen.blit(background, (0, 0))
-
-        # title
-        self.text = self.font.render(settings["title"], 1, (10, 10, 10))
-        self.text_pos = self.text.get_rect(centerx=background.get_width() // 2)
-        screen.blit(self.text, self.text_pos)
 
         # menu setup
         men = ["New Game", "Continue", "Options", "Quit"]
@@ -50,39 +41,41 @@ class MenuScene(Scene):
         self.menu.update(events)
 
         for event in events:
-            if event.type == NEW_GAME:
-                return SceneManager.replace(GameScene())
+            if event.type == game_events.NEW_GAME:
+                return SceneManager.new_root(GameScene())
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return SceneManager.pop()
 
         # I dunno what i'm doing lol
         world.process_all_systems()
 
     def render(self, world):
-        context = world.find_only("context")
+        context = world.find_component("context")
         screen = context["screen"]
 
         self.menu.draw(screen)
 
     def render_previous(self):
-        return False
+        return True
 
     def menu_action(self, btn):
         # if the user picked new game
         action = btn.text.lower()
 
         if action == "new game":
-            pygame.event.post(pygame.event.Event(NEW_GAME))
+            pygame.event.post(pygame.event.Event(game_events.NEW_GAME))
             return
 
         if action == "continue":
-            pygame.event.post(pygame.event.Event(CONTINUE))
+            pygame.event.post(pygame.event.Event(game_events.CONTINUE))
             return
 
         if action == "options":
-            pygame.event.post(pygame.event.Event(OPTIONS))
+            pygame.event.post(pygame.event.Event(game_events.OPTIONS))
             return
 
         if action == "quit":
-            pygame.event.post(pygame.event.Event(QUIT))
+            pygame.event.post(pygame.event.Event(game_events.QUIT))
             return
 
         # if we get here with an empty action somehow, just do nothing

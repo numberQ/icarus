@@ -1,5 +1,6 @@
 from enum import Enum
-
+import game_events
+import pygame
 
 # All scenes should implement this class's interface
 class Scene:
@@ -28,6 +29,7 @@ class SceneSwitch(Enum):
     Pop = 1
     Push = 2
     Replace = 3
+    New_Root = 4
 
 
 # Class which acts like a stack of scenes, allowing switching and overlaying between them
@@ -50,6 +52,7 @@ class SceneManager:
             pass
         elif scene_switch["type"] == SceneSwitch.Pop:
             self.scenes.pop()
+            pygame.event.post(pygame.event.Event(game_events.SCENE_REFOCUS))
         elif scene_switch["type"] == SceneSwitch.Push:
             scene = scene_switch["scene"]
             scene.setup(world)
@@ -58,6 +61,13 @@ class SceneManager:
             scene = scene_switch["scene"]
             scene.setup(world)
             self.scenes.pop()
+            self.scenes.append(scene)
+        elif scene_switch["type"] == SceneSwitch.New_Root:
+            scene = scene_switch["scene"]
+            scene.setup(world)
+            # Remove all scenes in reverse
+            for _ in range(len(self.scenes)):
+                self.scenes.pop()
             self.scenes.append(scene)
 
     # Helper calls update for the current scene
@@ -94,3 +104,7 @@ class SceneManager:
     @staticmethod
     def replace(scene):
         return {"type": SceneSwitch.Replace, "scene": scene}
+
+    @staticmethod
+    def new_root(scene):
+        return {"type": SceneSwitch.New_Root, "scene": scene}

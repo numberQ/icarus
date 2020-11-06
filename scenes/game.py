@@ -151,12 +151,12 @@ class GameScene(Scene):
             player_entity.rotation.angle = max(angle, -90)
 
     def render(self, world):
-        context = world.find_only("context")
+        context = world.find_component("context")
         screen = context["screen"]
         background = context["background"]
 
         graphical_entities = world.filter("graphic")
-        player_entity = world.filter("player")[0]
+        player_entity = world.find_entity("player")
 
         screen.blit(background, (0, 0))
 

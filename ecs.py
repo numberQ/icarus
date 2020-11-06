@@ -25,12 +25,21 @@ class World:
 
     # Query method for when you only have one entity with a given component. It returns the component from that single entity
     # Useful for things like global game settings so you can say:
-    #     WORLD.find_only('settings')
+    #     WORLD.find_component('settings')
     # instead of:
     #     WORLD.filter('settings')[0]['settings']
-    def find_only(self, component):
+    def find_component(self, component):
         filtered = self.filter(component)
         return filtered[0][component] if filtered is not [] else None
+    
+    # Query method for when you only have one entity with a given component. It returns the entity which contains that one component
+    # Useful for things like finding the player entity so you can say:
+    #     WORLD.find_entity('player')
+    # instead of:
+    #     WORLD.filter('player')[0]
+    def find_entity(self, component):
+        filtered = self.filter(component)
+        return filtered[0] if filtered is not [] else None
 
     # Query method that returns an entity given a particular id. This is useful for cross referencing entities. For example,
     # entity A could store entity B's ID in a component. This would then allow you to look up entity B while analyzing entity A.
