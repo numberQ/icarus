@@ -4,7 +4,8 @@ import pygame
 from pygame.sprite import Sprite
 
 from ecs import Component, System
-from scene import Scene
+from scene import Scene, SceneManager
+from scenes.pause import PauseScene
 
 
 class GraphicComponent(Component):
@@ -226,6 +227,8 @@ class GameScene(Scene):
         if keys[pygame.K_LEFT]:
             angle = player_entity.rotation.angle - 1
             player_entity.rotation.angle = max(angle, -90)
+        if keys[pygame.K_ESCAPE]:
+            return SceneManager.push(PauseScene())
 
     def render(self, world):
         context = world.find_component("context")
