@@ -151,12 +151,12 @@ class GameScene(Scene):
             player_entity.rotation.angle = max(angle, -90)
 
     def render(self, world):
-        context = world.find_only("context")
+        context = world.find_component("context")
         screen = context["screen"]
         background = context["background"]
 
         graphical_entities = world.filter("graphic")
-        player_entity = world.filter("player")[0]
+        player_entity = world.find_entity("player")
 
         screen.blit(background, (0, 0))
 
@@ -171,12 +171,12 @@ class GameScene(Scene):
         text = self.font.render(
             f"angle: {player_entity.velocity.angle}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 500))
+        screen.blit(text, (10, 678))
 
         text = self.font.render(
             f"speed: {player_entity.velocity.speed}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 550))
+        screen.blit(text, (10, 728))
 
     def render_previous(self):
         return False
