@@ -1,1 +1,8 @@
-{"metatype": "settings", "metadata": { "title": "Icarus: Shoot for the Moon", "height": 1024, "width": 768 } }
+{
+  "metadata": {
+    "height": 1024,
+    "title": "Icarus: Shoot for the Moon",
+    "width": 768
+  },
+  "metatype": "settings"
+}
