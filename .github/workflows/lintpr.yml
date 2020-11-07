@@ -19,3 +19,6 @@ jobs:
           failIf: new
           # Additional arguments to pass to flake8, default "." (current directory)
           args: "--ignore=E501,W503 --exclude=.git,__pycache__,env --max-line-length=88 --extend-ignore=E203 ."
+      - uses: jpetrucciani/black-check@master
+        with:
+          path: '.'
