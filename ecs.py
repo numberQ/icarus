@@ -18,6 +18,12 @@ class World:
         self.eindex[id] = entity
         return entity
 
+    # This function removes an entity from the ECS world, wiping it from all internal indexes
+    def remove_entity(self, entity):
+        self.eindex.pop(entity.id)
+        for component in entity.components:
+            self.cindex[component].remove(entity)
+
     # Query method which returns a list of all entities which have a given component. Useful for building systems
     def filter(self, component):
         entities = self.cindex.get(component)
@@ -192,7 +198,7 @@ WORLD = World()
 #
 class Entity(object):
     def __init__(self, id):
-        self.id = str(uuid.uuid4())
+        self.id = id
         self.components = []
 
     def attach(self, component: Component, namespace: str = None):
