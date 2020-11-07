@@ -11,7 +11,7 @@ Install our pip dependencies:
 pip install -r requirements.txt
 ```
 
-Install the pre-commit hooks:
+Install the pre-commit hooks: (Yes Drew, this step comes last.)
 ```sh
 pre-commit install
 ```
