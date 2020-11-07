@@ -28,14 +28,14 @@ class PositionComponent(Component):
         Component.__init__(self, "position", metadata)
 
 
-class VelocityComponent(Component):
+class PhysicsComponent(Component):
     """
     For entities with some kind of physics-based movement.
     """
 
-    def __init__(self, speed, angle):
-        metadata = {"speed": speed, "angle": angle}
-        Component.__init__(self, "velocity", metadata)
+    def __init__(self):
+        metadata = {"velocity": 0, "angle": 0, "acceleration": 0}
+        Component.__init__(self, "physics", metadata)
 
 
 class RotationComponent(Component):
@@ -67,39 +67,104 @@ class GlidingComponent(Component):
         Component.__init__(self, "gliding", {})
 
 
-class GlidingSystem(System):
+class GravityComponent(Component):
+    """
+    For entities that should be affected by gravity.
+    """
+
+    def __init__(self):
+        Component.__init__(self, "gravity", {})
+
+
+class ForceSystem(System):
+    def __init__(self):
+        super().__init__()
+        self.subscribe("physics_force")
+
+    def process(self, world):
+
+        events = self.pending()
+        physics_entities = set(world.filter("physics"))
+
+        for event in events:
+            magnitude = event["magnitude"]
+            angle = event["angle"]
+
+            if magnitude == 0:
+                continue
+
+            for entity in physics_entities:
+                if entity.physics.velocity == 0:
+                    entity.physics.angle = angle
+                theta = math.radians(angle - entity.physics.angle)
+                current_accel = entity.physics.acceleration
+
+                new_accel = math.sqrt(
+                    pow(magnitude, 2)
+                    + pow(current_accel, 2)
+                    + 2 * magnitude * current_accel * math.cos(theta)
+                ) * math.copysign(1, magnitude)
+                new_angle = math.degrees(theta / 2)
+
+                entity.physics.acceleration = new_accel
+                entity.physics.angle += new_angle
+                entity.physics.velocity += entity.physics.acceleration
+
+
+class MovementSystem(System):
     def __init__(self):
         super().__init__()
         self.subscribe("move")
-        self.angle_magnitude = 0.03
 
     def process(self, world):
-        # We don't actually need the movement events, but this clears the queue for the next frame
+
+        # Clear event queue
+        self.pending()
+
+        physics_entities = set(world.filter("physics"))
+
+        for entity in physics_entities:
+            radians = math.radians(entity.physics.angle)
+            speed = entity.physics.velocity
+
+            xx = entity.position.x + math.cos(radians) * speed
+            yy = entity.position.y + math.sin(radians) * speed
+
+            xx %= 1200
+            yy %= 800
+
+            entity.position.x = xx
+            entity.position.y = yy
+
+            # Reset acceleration so we can calculate it fresh next frame
+            # THIS IS CURRENTLY HAPPENING IN THE SCENE RENDER - NEED TO FIGURE OUT A BETTER WAY
+            # entity.physics.acceleration = 0
+
+
+class GlidingSystem(System):
+    def __init__(self):
+        super().__init__()
+        self.subscribe("glide")
+        self.angle_magnitude = 0.1
+
+    def process(self, world):
+
+        # Clear event queue
         self.pending()
 
         gliders = world.filter("gliding")
 
-        # All gliders should have velocity, position, and rotation components
+        # All gliders should have physics and rotation components
         for glider in gliders:
 
-            # Copy rotational angle into velocity angle
-            # This feels off - I think rotation should actually be rotational velocity
+            # Trig math requires radians, so let's convert
             angle = glider.rotation.angle
-            glider.velocity.angle = angle
+            radians = math.radians(angle)
+            magnitude = math.sin(radians) * self.angle_magnitude
 
-            # sin and cos math requires radians, so let's convert
-            angle_radians = math.radians(angle)
-
-            # Simulate gliding forces by having angle from the ground influence velocity
-            speed = glider.velocity.speed
-            speed += math.sin(angle_radians) * self.angle_magnitude
-
-            # Some basic velocity calculations
-            glider.position.x += math.cos(angle_radians) * speed
-            glider.position.y += math.sin(angle_radians) * speed
-
-            # Now that we've manipulated the velocity's speed, give it back to velocity
-            glider.velocity.speed = speed
+            world.inject_event(
+                {"type": "physics_force", "magnitude": magnitude, "angle": angle}
+            )
 
 
 class PlayerSprite(Sprite):
@@ -122,16 +187,28 @@ class GameScene(Scene):
             GraphicComponent(PlayerSprite("resources/icarus_himself.png"))
         )
         player_entity.attach(PositionComponent(100, 100))
-        player_entity.attach(VelocityComponent(1, 0))
+        player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
         player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
+        player_entity.attach(GravityComponent())
 
         # System registration
+        world.register_system(ForceSystem())
+        world.register_system(MovementSystem())
         world.register_system(GlidingSystem())
 
     def update(self, events, world):
+
+        # Gravity comes first
+        world.inject_event({"type": "physics_force", "magnitude": 0, "angle": 90})
+
+        # Then gliding, which translates rotation into acceleration
+        world.inject_event({"type": "glide"})
+
+        # Finally, we add movement after any events that could affect acceleration
         world.inject_event({"type": "move"})
+
         world.process_all_systems()
 
         # There will only ever be one player entity, unless scope drastically changes
@@ -169,14 +246,28 @@ class GameScene(Scene):
 
         # text
         text = self.font.render(
-            f"angle: {player_entity.velocity.angle}", True, (10, 10, 10)
+            f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 678))
+        screen.blit(text, (10, 300))
 
         text = self.font.render(
-            f"speed: {player_entity.velocity.speed}", True, (10, 10, 10)
+            f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
         )
-        screen.blit(text, (10, 728))
+        screen.blit(text, (10, 325))
+
+        text = self.font.render(
+            f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
+        )
+        screen.blit(text, (10, 350))
+
+        text = self.font.render(
+            f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
+        )
+        screen.blit(text, (10, 375))
+
+        # This is bad - only putting it here so we can display acceleration for debug purposes
+        # Let's figure out a better way to do this
+        player_entity.physics.acceleration = 0
 
     def render_previous(self):
         return False
