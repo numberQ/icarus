@@ -46,6 +46,7 @@ class PauseScene(Scene):
 
     def update(self, events, world):
         context = world.find_component("context")
+        settings = world.find_component("settings")
         context["paused"] = True
 
         # Update the button graphics
@@ -57,7 +58,7 @@ class PauseScene(Scene):
             elif event.type == PAUSE_CONTINUE:
                 return SceneManager.pop()
             elif event.type == PAUSE_SAVE_AND_QUIT:
-                self._save()
+                self._save(settings["save_file"])
                 return SceneManager.new_root(scenes.title.TitleScene())
             elif event.type == PAUSE_QUIT_TO_MENU:
                 return SceneManager.new_root(scenes.title.TitleScene())
@@ -92,8 +93,8 @@ class PauseScene(Scene):
         else:
             raise Exception(f"Unknown button with text {action} clicked")
 
-    def _save(self):
-        f = open("save_data.json", "w")
+    def _save(self, save_file):
+        f = open(save_file, "w")
         f.write("{'title': 'Now the file has more content!'}")
         f.close()
 

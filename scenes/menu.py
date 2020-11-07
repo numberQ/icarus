@@ -14,12 +14,13 @@ class MenuScene(Scene):
 
     def setup(self, world):
         context = world.find_component("context")
+        settings = world.find_component("settings")
         background = context["background"]
 
         # menu setup
         men = []
         men.append("New Game")
-        if path.exists("save_data.json"):
+        if path.exists(settings["save_file"]):
             men.append("Continue")
         men.append("Quit")
 
