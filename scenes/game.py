@@ -195,9 +195,9 @@ class GameScene(Scene):
         player_entity.attach(GravityComponent())
 
         # System registration
-        world.register_system(ForceSystem())
-        world.register_system(MovementSystem())
-        world.register_system(GlidingSystem())
+        self.systems = [ForceSystem(), MovementSystem(), GlidingSystem()]
+        for sys in self.systems:
+            world.register_system(sys)
 
     def update(self, events, world):
 
@@ -227,8 +227,11 @@ class GameScene(Scene):
         if keys[pygame.K_LEFT]:
             angle = player_entity.rotation.angle - 1
             player_entity.rotation.angle = max(angle, -90)
-        if keys[pygame.K_ESCAPE]:
-            return SceneManager.push(PauseScene())
+
+        for event in events:
+            # Use keyup here as a simple way to only trigger once and not repeatedly
+            if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
+                return SceneManager.push(PauseScene())
 
     def render(self, world):
         context = world.find_component("context")
@@ -274,3 +277,10 @@ class GameScene(Scene):
 
     def render_previous(self):
         return False
+
+    def teardown(self, world):
+        player = world.find_entity("player")
+        world.remove_entity(player)
+
+        for sys in self.systems:
+            world.unregister_system(sys)

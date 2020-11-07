@@ -9,21 +9,25 @@ import game_events
 class Scene:
     # This method get called once when the scene is first added to the game. This allows the Scene to do one time setup using resources stored in the world
     def setup(self, world):
-        print("You must override the setup() method!")
+        pass
 
     # Runs scene physics/logic/collision detection
     def update(self, events, world):
-        print("You must override the update() method!")
+        pass
 
     # Returns a scene switch event (see the helper functions in SceneManager to generate them)
     # This method should the scene
     def render(self, world):
-        print("You must override the render() method!")
+        pass
 
     # This method returns either True or False to allow the game to determine whether previous scenes should be rendered
     # This can be useful for like pause guis and the like
     def render_previous(self):
-        print("You must override the render_previous() method")
+        return False
+
+    # This method can be useful for cleaning up all the entities and systems your scene created from the game world
+    def teardown(self, world):
+        pass
 
 
 # Simple enum for switching between scenes
@@ -54,7 +58,7 @@ class SceneManager:
         if scene_switch["type"] == SceneSwitch.Nothing:
             pass
         elif scene_switch["type"] == SceneSwitch.Pop:
-            self.scenes.pop()
+            self.scenes.pop().teardown(world)
             pygame.event.post(pygame.event.Event(game_events.SCENE_REFOCUS))
         elif scene_switch["type"] == SceneSwitch.Push:
             scene = scene_switch["scene"]
@@ -63,14 +67,14 @@ class SceneManager:
         elif scene_switch["type"] == SceneSwitch.Replace:
             scene = scene_switch["scene"]
             scene.setup(world)
-            self.scenes.pop()
+            self.scenes.pop().teardown(world)
             self.scenes.append(scene)
         elif scene_switch["type"] == SceneSwitch.New_Root:
             scene = scene_switch["scene"]
             scene.setup(world)
             # Remove all scenes in reverse
             for _ in range(len(self.scenes)):
-                self.scenes.pop()
+                self.scenes.pop().teardown(world)
             self.scenes.append(scene)
 
     # Helper calls update for the current scene

@@ -1,11 +1,14 @@
 import pygame
 
-from scene import Scene
+import scenes.title
+from button import Button
+from game_events import PAUSE_CONTINUE, PAUSE_QUIT_TO_MENU
+from scene import Scene, SceneManager
 
 
 class PauseScene(Scene):
     def __init__(self):
-        self.regular_font = pygame.font.Font(None, 36)
+        self.regular_font = pygame.font.Font(None, 42)
 
     def setup(self, world):
         context = world.find_component("context")
@@ -18,21 +21,43 @@ class PauseScene(Scene):
             centerx=background.get_width() // 2, centery=background.get_height() // 4
         )
 
+        self.menu = pygame.sprite.Group()
+        options = ["Continue", "Quit to Menu"]
+        for idx, menu_item in enumerate(options):
+            offset = 0
+
+            rect = pygame.Rect(0, 0, 200, 60)
+            rect.centerx = background.get_width() // 2
+            rect.centery = background.get_height() // 2 + (offset + (idx * 70))
+
+            btn = Button(
+                pygame.Color("green"),
+                pygame.Color("red"),
+                rect,
+                self._handle_click,
+                menu_item,
+                pygame.Color("black"),
+            )
+            self.menu.add(btn)
+
         # Put all the sprites we want to render into a sprite group for easy adds and removes
         self.pause_screen = pygame.sprite.Group()
         self.pause_screen.add(self.pause)
 
     def update(self, events, world):
-        # If a key press is detected, push the next scene
-        pass
+        context = world.find_component("context")
+        context["paused"] = True
 
-    # This helps us hide things we want when we push a new scene
-    def _transition_away_from(self, events, world):
-        pass
+        # Update the button graphics
+        self.menu.update(events)
 
-    # This helps us get everything back in the right spot when we transition back to our scene
-    def _transition_back_to(self, events, world):
-        pass
+        for event in events:
+            if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
+                return SceneManager.pop()
+            elif event.type == PAUSE_CONTINUE:
+                return SceneManager.pop()
+            elif event.type == PAUSE_QUIT_TO_MENU:
+                return SceneManager.new_root(scenes.title.TitleScene())
 
     def render(self, world):
         context = world.find_component("context")
@@ -47,6 +72,20 @@ class PauseScene(Scene):
         screen.blit(overlay, overlay.get_rect())
 
         self.pause_screen.draw(screen)
+        self.menu.draw(screen)
+
+    def _handle_click(self, btn):
+        # if the user picked new game
+        action = btn.text.lower()
+
+        if action == "continue":
+            pygame.event.post(pygame.event.Event(PAUSE_CONTINUE))
+            return
+        elif action == "quit to menu":
+            pygame.event.post(pygame.event.Event(PAUSE_QUIT_TO_MENU))
+            return
+        else:
+            raise Exception(f"Unknown button with text {action} clicked")
 
     def render_previous(self):
         return True
