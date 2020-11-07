@@ -1,0 +1,21 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Lint Pull Requests
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: grantmcconnaughey/lintly-flake8-github-action@v1.0
+        with:
+          # The GitHub API token to create reviews with
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fail if "new" violations detected or "any", default "new"
+          failIf: new
+          # Additional arguments to pass to flake8, default "." (current directory)
+          args: "--ignore=E501,W503 --exclude=.git,__pycache__,env --max-line-length=88 --extend-ignore=E203 ."
