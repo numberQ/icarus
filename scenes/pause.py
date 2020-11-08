@@ -2,7 +2,7 @@ import pygame
 
 import scenes.title
 from button import Button
-from game_events import PAUSE_CONTINUE, PAUSE_QUIT_TO_MENU
+from game_events import PAUSE_CONTINUE, PAUSE_QUIT_TO_MENU, PAUSE_SAVE_AND_QUIT
 from scene import Scene, SceneManager
 
 
@@ -22,7 +22,7 @@ class PauseScene(Scene):
         )
 
         self.menu = pygame.sprite.Group()
-        options = ["Continue", "Quit to Menu"]
+        options = ["Continue", "Save & Quit", "Quit to Menu"]
         for idx, menu_item in enumerate(options):
             offset = 0
 
@@ -46,6 +46,7 @@ class PauseScene(Scene):
 
     def update(self, events, world):
         context = world.find_component("context")
+        settings = world.find_component("settings")
         context["paused"] = True
 
         # Update the button graphics
@@ -56,6 +57,9 @@ class PauseScene(Scene):
                 return SceneManager.pop()
             elif event.type == PAUSE_CONTINUE:
                 return SceneManager.pop()
+            elif event.type == PAUSE_SAVE_AND_QUIT:
+                self._save(settings["save_file"])
+                return SceneManager.new_root(scenes.title.TitleScene())
             elif event.type == PAUSE_QUIT_TO_MENU:
                 return SceneManager.new_root(scenes.title.TitleScene())
 
@@ -75,17 +79,24 @@ class PauseScene(Scene):
         self.menu.draw(screen)
 
     def _handle_click(self, btn):
-        # if the user picked new game
         action = btn.text.lower()
 
         if action == "continue":
             pygame.event.post(pygame.event.Event(PAUSE_CONTINUE))
+            return
+        elif action == "save & quit":
+            pygame.event.post(pygame.event.Event(PAUSE_SAVE_AND_QUIT))
             return
         elif action == "quit to menu":
             pygame.event.post(pygame.event.Event(PAUSE_QUIT_TO_MENU))
             return
         else:
             raise Exception(f"Unknown button with text {action} clicked")
+
+    def _save(self, save_file):
+        f = open(save_file, "w")
+        f.write("{'title': 'Now the file has more content!'}")
+        f.close()
 
     def render_previous(self):
         return True
