@@ -1,7 +1,9 @@
+from os import path
+
 import pygame
 
 from button import Button
-from game_events import CONTINUE, NEW_GAME, OPTIONS, QUIT
+from game_events import CONTINUE, NEW_GAME, QUIT
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 
@@ -12,10 +14,15 @@ class MenuScene(Scene):
 
     def setup(self, world):
         context = world.find_component("context")
+        settings = world.find_component("settings")
         background = context["background"]
 
         # menu setup
-        men = ["New Game", "Continue", "Options", "Quit"]
+        men = []
+        men.append("New Game")
+        if path.exists(settings["save_file"]):
+            men.append("Continue")
+        men.append("Quit")
 
         for idx, m in enumerate(men):
             offset = -((len(men) * 70) // 2) + 100
@@ -28,8 +35,8 @@ class MenuScene(Scene):
                 pygame.Color("green"),
                 pygame.Color("red"),
                 rect,
-                self.menu_action,
-                m.upper(),
+                self._handle_click,
+                m,
                 pygame.Color("black"),
             )
             self.menu.add(btn)
@@ -40,6 +47,9 @@ class MenuScene(Scene):
 
         for event in events:
             if event.type == NEW_GAME:
+                return SceneManager.new_root(GameScene())
+            if event.type == CONTINUE:
+                # we have no data to save right now, so just start a fresh game if we have a save file
                 return SceneManager.new_root(GameScene())
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return SceneManager.pop()
@@ -56,25 +66,17 @@ class MenuScene(Scene):
     def render_previous(self):
         return True
 
-    def menu_action(self, btn):
-        # if the user picked new game
+    def _handle_click(self, btn):
         action = btn.text.lower()
 
         if action == "new game":
             pygame.event.post(pygame.event.Event(NEW_GAME))
             return
-
-        if action == "continue":
+        elif action == "continue":
             pygame.event.post(pygame.event.Event(CONTINUE))
             return
-
-        if action == "options":
-            pygame.event.post(pygame.event.Event(OPTIONS))
-            return
-
-        if action == "quit":
+        elif action == "quit":
             pygame.event.post(pygame.event.Event(QUIT))
             return
-
-        # if we get here with an empty action somehow, just do nothing
-        return
+        else:
+            raise Exception(f"Unknown button with text {action} clicked")
