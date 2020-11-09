@@ -82,7 +82,9 @@ class ForceSystem(System):
         super().__init__()
         self.subscribe("physics_force")
 
-    def process(self, world):
+    def process(self, events, world):
+        if world.find_component("context")["paused"]:
+            return
 
         events = self.pending()
         physics_entities = set(world.filter("physics"))
@@ -117,7 +119,9 @@ class MovementSystem(System):
         super().__init__()
         self.subscribe("move")
 
-    def process(self, world):
+    def process(self, events, world):
+        if world.find_component("context")["paused"]:
+            return
 
         # Clear event queue
         self.pending()
@@ -148,7 +152,9 @@ class GlidingSystem(System):
         self.subscribe("glide")
         self.angle_magnitude = 0.1
 
-    def process(self, world):
+    def process(self, events, world):
+        if world.find_component("context")["paused"]:
+            return
 
         # Clear event queue
         self.pending()
@@ -199,6 +205,14 @@ class GameScene(Scene):
         for sys in self.systems:
             world.register_system(sys)
 
+        world.inject_event(
+            {
+                "type": "sound",
+                "action": "start",
+                "sound": "background_music",
+            }
+        )
+
     def update(self, events, world):
 
         # Gravity comes first
@@ -210,7 +224,7 @@ class GameScene(Scene):
         # Finally, we add movement after any events that could affect acceleration
         world.inject_event({"type": "move"})
 
-        world.process_all_systems()
+        world.process_all_systems(events)
 
         # There will only ever be one player entity, unless scope drastically changes
         player_entity = world.filter("player")[0]

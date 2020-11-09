@@ -1,14 +1,21 @@
 import pygame
 
+from button import ButtonSystem
 from common_components import ContextComponent
 from ecs import WORLD, Component
 from scene import SceneManager
 from scenes.title import TitleScene
+from sound import AudioSystem
 
 
 def main():
     # Initialize pygame before we do anything else
     pygame.init()
+    pygame.mixer.init()
+
+    # Initialize global systems in the game world
+    WORLD.register_system(AudioSystem())
+    WORLD.register_system(ButtonSystem())
 
     # Load game metadata and store it in an entity
     settings = Component.load_from_json("settings")

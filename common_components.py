@@ -8,6 +8,7 @@ class ContextComponent(Component):
             "clock": clock,
             "background": background,
             "running": True,
+            "paused": False,
         }
         Component.__init__(self, "context", metadata)
 

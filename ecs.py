@@ -20,9 +20,17 @@ class World:
 
     # This function removes an entity from the ECS world, wiping it from all internal indexes
     def remove_entity(self, entity):
-        self.eindex.pop(entity.id)
+        entity = self.eindex.pop(entity.id)
         for component in entity.components:
             self.cindex[component].remove(entity)
+
+    # This function removes a list of entities from the ECS world, wiping it from all internal indexes
+    def remove_entities(self, entities):
+        ids = [entity.id for entity in entities]
+        for id in ids:
+            entity = self.eindex.pop(id)
+            for component in entity.components:
+                self.cindex[component].remove(entity)
 
     # Query method which returns a list of all entities which have a given component. Useful for building systems
     def filter(self, component):
@@ -76,10 +84,10 @@ class World:
         self.events_to_send = []
 
     # Convenience method to run all currently registered systems
-    def process_all_systems(self):
+    def process_all_systems(self, pygame_events):
         self._dispatch_events()
         for system in self.systems:
-            system.process(WORLD)
+            system.process(pygame_events, WORLD)
 
 
 class Component:
@@ -301,5 +309,5 @@ class System(object):
         self.events = []
         return ret
 
-    def process(self, world):
+    def process(self, events, world):
         pass

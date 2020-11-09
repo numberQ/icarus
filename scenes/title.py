@@ -37,6 +37,9 @@ class TitleScene(Scene):
         self.title_screen.add(self.title, self.push_anything)
 
     def update(self, events, world):
+        # Run all the systems registered in the world
+        world.process_all_systems(events)
+
         # If a key press is detected, push the next scene
         for event in events:
             if event.type == SCENE_REFOCUS:
