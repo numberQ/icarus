@@ -94,21 +94,25 @@ class ForceSystem(System):
                 continue
 
             for entity in physics_entities:
+
                 if entity.physics.velocity == 0:
                     entity.physics.angle = angle
+                    entity.physics.acceleration = magnitude
+                    continue
+
                 theta = math.radians(angle - entity.physics.angle)
                 current_accel = entity.physics.acceleration
 
-                new_accel = math.sqrt(
-                    pow(magnitude, 2)
-                    + pow(current_accel, 2)
-                    + 2 * magnitude * current_accel * math.cos(theta)
-                ) * math.copysign(1, magnitude)
-                new_angle = math.degrees(theta / 2)
+                rx = magnitude * math.cos(theta) + current_accel * math.cos(theta)
+                ry = magnitude * math.sin(theta) + current_accel * math.sin(theta)
+                new_accel = math.sqrt(pow(rx, 2) + pow(ry, 2)) * math.copysign(
+                    1, magnitude
+                )
+                new_angle = math.degrees(math.atan(ry / rx))
+                # new_angle = math.degrees(theta / 2)
 
-                entity.physics.acceleration = new_accel
                 entity.physics.angle += new_angle
-                entity.physics.velocity += entity.physics.acceleration
+                entity.physics.acceleration = new_accel
 
 
 class MovementSystem(System):
@@ -125,13 +129,14 @@ class MovementSystem(System):
 
         for entity in physics_entities:
             radians = math.radians(entity.physics.angle)
+            entity.physics.velocity += entity.physics.acceleration
             speed = entity.physics.velocity
 
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
-            xx %= 1200
-            yy %= 800
+            xx %= 1024
+            yy %= 768
 
             entity.position.x = xx
             entity.position.y = yy
@@ -146,6 +151,8 @@ class GlidingSystem(System):
         super().__init__()
         self.subscribe("glide")
         self.angle_magnitude = 0.1
+        self.lift_coeff = 1.5
+        self.drag_coeff = 2
 
     def process(self, world):
 
@@ -165,6 +172,12 @@ class GlidingSystem(System):
             world.inject_event(
                 {"type": "physics_force", "magnitude": magnitude, "angle": angle}
             )
+
+            # Drag
+            # drag_magnitude = 0.5 * self.drag_coeff * 1.22 * 1 * pow(glider.physics.velocity, 2) * -1
+            # world.inject_event(
+            #     {"type": "physics_force", "magnitude": drag_magnitude, "angle": glider.physics.angle}
+            # )
 
 
 class PlayerSprite(Sprite):
@@ -201,7 +214,7 @@ class GameScene(Scene):
     def update(self, events, world):
 
         # Gravity comes first
-        world.inject_event({"type": "physics_force", "magnitude": 0, "angle": 90})
+        # world.inject_event({"type": "physics_force", "magnitude": 0.001, "angle": 90})
 
         # Then gliding, which translates rotation into acceleration
         world.inject_event({"type": "glide"})
