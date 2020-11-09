@@ -6,8 +6,7 @@ name: Lint Pull Requests
 # events but only for the master branch
 on:
   pull_request:
-    branches:
-    - main
+    branches: [ master ]
 
 jobs:
   lint:
