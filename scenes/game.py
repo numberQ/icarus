@@ -178,14 +178,29 @@ class MovementSystem(System):
                 entity.physics.velocity_magnitude = resultant_magnitude
                 entity.physics.velocity_angle += resultant_theta
 
-            radians = math.radians(entity.physics.velocity_angle)
+            # Drag equation
+            cross_sectional_area = 0.75 * math.cos(math.radians(entity.rotation.angle))
+            drag_magnitude = (
+                0.5  # Drag magnitude is always divided by 2
+                * 0.5  # Drag coefficient
+                * 1.22  # Air resistance
+                * cross_sectional_area
+                * pow(entity.physics.velocity_magnitude, 2)
+                / entity.physics.mass
+            )
+
+            # Drag force always acts in the opposite direction of velocity,
+            # so we can simply modify magnitude without worrying about angle.
+            entity.physics.velocity_magnitude -= drag_magnitude
             speed = entity.physics.velocity_magnitude
+
+            radians = math.radians(entity.physics.velocity_angle)
 
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
-            xx %= 1024
-            yy %= 768
+            xx %= world.find_component("settings").height
+            yy %= world.find_component("settings").width
 
             entity.position.x = xx
             entity.position.y = yy
@@ -195,9 +210,7 @@ class GlidingSystem(System):
     def __init__(self):
         super().__init__()
         self.subscribe("glide")
-        self.angle_multiplier = 0.1
-        self.lift_coeff = 1.5
-        self.drag_coeff = 2
+        self.angle_multiplier = 10
 
     def process(self, world):
 
@@ -216,24 +229,6 @@ class GlidingSystem(System):
 
             world.inject_event(
                 {"type": "physics_force", "magnitude": magnitude, "angle": angle}
-            )
-
-            # Drag
-            drag_magnitude = (
-                0.5
-                * self.drag_coeff
-                * 1.22
-                * 1
-                * pow(glider.physics.velocity_magnitude, 2)
-                / glider.physics.mass
-                * -1
-            )
-            world.inject_event(
-                {
-                    "type": "physics_force",
-                    "magnitude": drag_magnitude,
-                    "angle": glider.physics.velocity_angle,
-                }
             )
 
 
@@ -287,7 +282,7 @@ class GameScene(Scene):
             PhysicsFrameResetSystem(),
             ForceSystem(),
             MovementSystem(),
-            GlidingSystem(),
+            # GlidingSystem(),
         ]
         for sys in self.systems:
             world.register_system(sys)
@@ -318,9 +313,8 @@ class GameScene(Scene):
         # Also, clamp the angle from straight up to straight down. Otherwise things get out of control.
         # Must improve physics engine before allowing full 360 degree rotation.
         if keys[pygame.K_RIGHT]:
-            world.inject_event({"type": "physics_force", "magnitude": 0.1, "angle": 0})
-            # angle = player_entity.rotation.angle + 1
-            # player_entity.rotation.angle = min(angle, 90)
+            angle = player_entity.rotation.angle + 1
+            player_entity.rotation.angle = min(angle, 90)
         if keys[pygame.K_LEFT]:
             angle = player_entity.rotation.angle - 1
             player_entity.rotation.angle = max(angle, -90)
