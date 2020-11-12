@@ -11,24 +11,26 @@ class World:
     # List to buffer all events in before they are dispatched to systems
     events_to_send = []
 
+    debug = False
+
     # This function generates a new entity within this world. The entity is tracked inside this worlds mappings
     def gen_entity(self):
-        id = str(uuid.uuid4())
-        entity = Entity(id)
-        self.eindex[id] = entity
+        eid = str(uuid.uuid4())
+        entity = Entity(eid)
+        self.eindex[eid] = entity
         return entity
 
     # This function removes an entity from the ECS world, wiping it from all internal indexes
     def remove_entity(self, entity):
-        entity = self.eindex.pop(entity.id)
+        entity = self.eindex.pop(entity.eid)
         for component in entity.components:
             self.cindex[component].remove(entity)
 
     # This function removes a list of entities from the ECS world, wiping it from all internal indexes
     def remove_entities(self, entities):
-        ids = [entity.id for entity in entities]
-        for id in ids:
-            entity = self.eindex.pop(id)
+        eids = [entity.eid for entity in entities]
+        for eid in eids:
+            entity = self.eindex.pop(eid)
             for component in entity.components:
                 self.cindex[component].remove(entity)
 
@@ -205,8 +207,8 @@ WORLD = World()
 #     entities = WORLD.filter('movement')
 #
 class Entity(object):
-    def __init__(self, id):
-        self.id = id
+    def __init__(self, eid):
+        self.eid = eid
         self.components = []
 
     def attach(self, component: Component, namespace: str = None):

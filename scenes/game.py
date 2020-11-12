@@ -111,6 +111,11 @@ class ForceSystem(System):
             if added_magnitude == 0:
                 continue
 
+            if added_magnitude < 0:
+                added_magnitude *= -1
+                angle += 180
+                angle %= 360
+
             for entity in physics_entities:
 
                 if entity.physics.force_magnitude == 0:
@@ -138,8 +143,6 @@ class ForceSystem(System):
                         )
                     )
 
-                resultant_theta = truncate(resultant_theta, 5)
-
                 entity.physics.force_magnitude = resultant_magnitude
                 entity.physics.force_angle += resultant_theta
 
@@ -166,6 +169,9 @@ class MovementSystem(System):
 
         for entity in physics_entities:
 
+            entity.physics.force_magnitude = round(entity.physics.force_magnitude, 5)
+            entity.physics.force_angle = round(entity.physics.force_angle, 5)
+
             if entity.physics.velocity_magnitude == 0:
                 entity.physics.velocity_magnitude = (
                     entity.physics.force_magnitude / entity.physics.mass
@@ -190,8 +196,6 @@ class MovementSystem(System):
                 entity.physics.velocity_magnitude = resultant_magnitude
                 entity.physics.velocity_angle += resultant_theta
 
-            entity.physics.velocity_angle = truncate(entity.physics.velocity_angle, 5)
-
             # Drag equation
             min_cross_section = 0.1
             max_cross_section = 0.5
@@ -212,8 +216,13 @@ class MovementSystem(System):
             # Drag force always acts in the opposite direction of velocity,
             # so we can simply modify magnitude without worrying about angle.
             entity.physics.velocity_magnitude -= drag_magnitude
-            speed = entity.physics.velocity_magnitude
 
+            entity.physics.velocity_angle = round(entity.physics.velocity_angle, 5)
+            entity.physics.velocity_magnitude = round(
+                entity.physics.velocity_magnitude, 5
+            )
+
+            speed = entity.physics.velocity_magnitude
             radians = math.radians(entity.physics.velocity_angle)
 
             xx = entity.position.x + math.cos(radians) * speed
@@ -246,12 +255,15 @@ class GlidingSystem(System):
 
             # Lift equation
             wing_planform_area = 0.75
+            radians = math.radians(
+                glider.physics.velocity_angle - glider.rotation.angle
+            )
             velocity_in_flow_direction = glider.physics.velocity_magnitude * math.sin(
-                math.radians(glider.rotation.angle - glider.physics.velocity_angle)
+                radians
             )
             lift_magnitude = (
                 0.5  # Lift magnitude is always divided by 2
-                * 0.5  # Lift coefficient
+                * 1.5  # Lift coefficient
                 * 1.22  # Air density
                 * wing_planform_area
                 * pow(velocity_in_flow_direction, 2)
@@ -324,13 +336,13 @@ class GameScene(Scene):
         for sys in self.systems:
             world.register_system(sys)
 
-        # world.inject_event(
-        #     {
-        #         "type": "sound",
-        #         "action": "start",
-        #         "sound": "background_music",
-        #     }
-        # )
+        world.inject_event(
+            {
+                "type": "sound",
+                "action": "start",
+                "sound": "background_music",
+            }
+        )
 
     def update(self, events, world):
 
@@ -340,16 +352,16 @@ class GameScene(Scene):
         # Gravity comes first
         world.inject_event({"type": "physics_force", "magnitude": 9.8, "angle": 90})
 
-        # Then gliding, which translates rotation into acceleration
+        # Then gliding, which translates rotation into lift force
         world.inject_event({"type": "glide"})
 
-        # Finally, we add movement after any events that could affect acceleration
+        # Finally, we add movement after any events that could affect force
         world.inject_event({"type": "move"})
 
         world.process_all_systems(events)
 
         # There will only ever be one player entity, unless scope drastically changes
-        player_entity = world.filter("player")[0]
+        player_entity = world.find_entity("player")
 
         keys = pygame.key.get_pressed()
 
@@ -360,7 +372,7 @@ class GameScene(Scene):
         if keys[pygame.K_RIGHT]:
             angle = player_entity.rotation.angle + 1
             player_entity.rotation.angle = min(angle, 90)
-        if keys[pygame.K_LEFT] or False:
+        if keys[pygame.K_LEFT]:
             angle = player_entity.rotation.angle - 1
             player_entity.rotation.angle = max(angle, -90)
 
@@ -368,6 +380,10 @@ class GameScene(Scene):
             # Use keyup here as a simple way to only trigger once and not repeatedly
             if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
                 return SceneManager.push(PauseScene())
+            # Press space to enable debug mode.
+            # Useful for conditional breakpoints if you don't want to break on every frame.
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                world.debug = True
 
     def render(self, world):
         context = world.find_component("context")
