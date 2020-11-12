@@ -8,6 +8,11 @@ from scene import Scene, SceneManager
 from scenes.pause import PauseScene
 
 
+def truncate(number, decimal_places) -> float:
+    stepper = 10.0 ** decimal_places
+    return math.trunc(stepper * number) / stepper
+
+
 class GraphicComponent(Component):
     """
     For visible entities that have a sprite.
@@ -133,6 +138,8 @@ class ForceSystem(System):
                         )
                     )
 
+                resultant_theta = truncate(resultant_theta, 5)
+
                 entity.physics.force_magnitude = resultant_magnitude
                 entity.physics.force_angle += resultant_theta
 
@@ -151,8 +158,9 @@ class MovementSystem(System):
         if world.find_component("context")["paused"]:
             return
 
-        # Clear event queue
-        self.pending()
+        # If there haven't been any movement events, don't move
+        if len(self.pending()) == 0:
+            return
 
         physics_entities = set(world.filter("physics"))
 
@@ -182,12 +190,20 @@ class MovementSystem(System):
                 entity.physics.velocity_magnitude = resultant_magnitude
                 entity.physics.velocity_angle += resultant_theta
 
+            entity.physics.velocity_angle = truncate(entity.physics.velocity_angle, 5)
+
             # Drag equation
-            cross_sectional_area = 0.75 * math.cos(math.radians(entity.rotation.angle))
+            min_cross_section = 0.1
+            max_cross_section = 0.5
+            cross_sectional_area = min_cross_section + (
+                max_cross_section - min_cross_section
+            ) * math.sin(
+                math.radians(entity.rotation.angle - entity.physics.velocity_angle)
+            )
             drag_magnitude = (
                 0.5  # Drag magnitude is always divided by 2
-                * 0.5  # Drag coefficient
-                * 1.22  # Air resistance
+                * 0.9  # Drag coefficient
+                * 1.22  # Air density
                 * cross_sectional_area
                 * pow(entity.physics.velocity_magnitude, 2)
                 / entity.physics.mass
@@ -214,27 +230,40 @@ class GlidingSystem(System):
     def __init__(self):
         super().__init__()
         self.subscribe("glide")
-        self.angle_multiplier = 10
 
     def process(self, events, world):
         if world.find_component("context")["paused"]:
             return
 
-        # Clear event queue
-        self.pending()
+        # If there haven't been any glide events, don't glide
+        if len(self.pending()) == 0:
+            return
 
         gliders = world.filter("gliding")
 
         # All gliders should have physics and rotation components
         for glider in gliders:
 
-            # Trig math requires radians, so let's convert
-            angle = glider.rotation.angle
-            radians = math.radians(angle)
-            magnitude = math.sin(radians) * self.angle_multiplier
+            # Lift equation
+            wing_planform_area = 0.75
+            velocity_in_flow_direction = glider.physics.velocity_magnitude * math.sin(
+                math.radians(glider.rotation.angle - glider.physics.velocity_angle)
+            )
+            lift_magnitude = (
+                0.5  # Lift magnitude is always divided by 2
+                * 0.5  # Lift coefficient
+                * 1.22  # Air density
+                * wing_planform_area
+                * pow(velocity_in_flow_direction, 2)
+            ) * math.copysign(1, velocity_in_flow_direction)
+            lift_angle = glider.rotation.angle - 90
 
             world.inject_event(
-                {"type": "physics_force", "magnitude": magnitude, "angle": angle}
+                {
+                    "type": "physics_force",
+                    "magnitude": lift_magnitude,
+                    "angle": lift_angle,
+                }
             )
 
 
@@ -243,16 +272,18 @@ class PhysicsFrameResetSystem(System):
         super().__init__()
         self.subscribe("physics_frame_reset")
 
-    def process(self, world):
+    def process(self, events, world):
 
-        # Clear event queue
-        self.pending()
+        # If there haven't been any frame reset events, don't reset the frame
+        if len(self.pending()) == 0:
+            return
 
         physics_entities = set(world.filter("physics"))
 
         for entity in physics_entities:
             entity.physics.force_magnitude = 0
             entity.physics.force_angle = 0
+            entity.physics.velocity_angle %= 360
 
 
 class PlayerSprite(Sprite):
@@ -276,9 +307,9 @@ class GameScene(Scene):
             GraphicComponent(PlayerSprite("resources/icarus_himself.png"))
         )
         player_entity.attach(PositionComponent(100, 100))
-        average_adult_mass_kg = 62
-        player_entity.attach(PhysicsComponent(average_adult_mass_kg))
-        player_entity.attach(RotationComponent(0))
+        average_adult_mass = 62
+        player_entity.attach(PhysicsComponent(average_adult_mass))
+        player_entity.attach(RotationComponent(90))
         player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
@@ -288,18 +319,18 @@ class GameScene(Scene):
             PhysicsFrameResetSystem(),
             ForceSystem(),
             MovementSystem(),
-            # GlidingSystem(),
+            GlidingSystem(),
         ]
         for sys in self.systems:
             world.register_system(sys)
 
-        world.inject_event(
-            {
-                "type": "sound",
-                "action": "start",
-                "sound": "background_music",
-            }
-        )
+        # world.inject_event(
+        #     {
+        #         "type": "sound",
+        #         "action": "start",
+        #         "sound": "background_music",
+        #     }
+        # )
 
     def update(self, events, world):
 
@@ -329,7 +360,7 @@ class GameScene(Scene):
         if keys[pygame.K_RIGHT]:
             angle = player_entity.rotation.angle + 1
             player_entity.rotation.angle = min(angle, 90)
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or False:
             angle = player_entity.rotation.angle - 1
             player_entity.rotation.angle = max(angle, -90)
 
