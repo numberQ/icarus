@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "height": 1024,
+    "height": 1280,
     "save_file": "save_data.json",
     "title": "Icarus: Shoot for the Moon",
-    "width": 768
+    "width": 960
   },
   "metatype": "settings"
 }
