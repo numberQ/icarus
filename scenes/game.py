@@ -6,6 +6,7 @@ from pygame.sprite import Sprite
 from ecs import Component, System
 from scene import Scene, SceneManager
 from scenes.pause import PauseScene
+from utils import find_data_file
 
 
 class GraphicComponent(Component):
@@ -175,7 +176,7 @@ class PlayerSprite(Sprite):
     def __init__(self, image_path):
         Sprite.__init__(self)
 
-        self.image = pygame.image.load(image_path)
+        self.image = pygame.image.load(find_data_file(image_path))
         self.rect = self.image.get_rect()
 
 

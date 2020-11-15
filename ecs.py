@@ -2,6 +2,8 @@ import json
 import uuid
 from typing import Dict
 
+from utils import find_data_file
+
 
 class World:
     eindex = {}  # Index mapping entity IDs to entity objects
@@ -126,7 +128,7 @@ class Component:
         :param filename: name of the JSON file, without the .json
         :return: a new Component instance using the usual construtor
         """
-        with open(filename + ".json", "r") as f:
+        with open(find_data_file(filename + ".json"), "r") as f:
             loaded_json = json.load(f)
             metatype = loaded_json["metatype"]
             metadata = loaded_json["metadata"]
