@@ -191,7 +191,7 @@ class GameScene(Scene):
         # Player entity setup
         player_entity = world.gen_entity()
         player_entity.attach(
-            GraphicComponent(PlayerSprite("resources/icarus_himself.png"))
+            GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
         player_entity.attach(PositionComponent(100, 100))
         player_entity.attach(PhysicsComponent())
