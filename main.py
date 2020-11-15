@@ -11,10 +11,10 @@ from sound import AudioSystem
 def main():
     # Initialize pygame before we do anything else
     pygame.init()
-    pygame.mixer.init()
 
     # Initialize global systems in the game world
-    WORLD.register_system(AudioSystem())
+    if pygame.mixer.get_init() is not None:
+        WORLD.register_system(AudioSystem())
     WORLD.register_system(ButtonSystem())
 
     # Load game metadata and store it in an entity

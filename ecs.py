@@ -79,7 +79,7 @@ class World:
     def _dispatch_events(self):
         for event in self.events_to_send:
             event_type = event["type"]
-            for subscriber in self.subscriptions[event_type]:
+            for subscriber in self.subscriptions.get(event_type, []):
                 subscriber.events.append(event)
         self.events_to_send = []
 
