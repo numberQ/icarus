@@ -135,9 +135,6 @@ class MovementSystem(System):
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
-            xx %= 1200
-            yy %= 800
-
             entity.position.x = xx
             entity.position.y = yy
 
@@ -182,6 +179,53 @@ class PlayerSprite(Sprite):
         self.rect = self.image.get_rect()
 
 
+class CameraComponent(Component):
+    def __init__(self, target_entity_id):
+        metadata = {
+            "target_entity_id": target_entity_id,
+            "x": 0,
+            "y": 0,
+        }
+        Component.__init__(self, "camera", metadata)
+
+
+class CameraSystem(System):
+    def __init__(self):
+        super().__init__()
+
+    def process(self, events, world):
+        screen = world.find_component("context")["screen"]
+        camera = world.find_component("camera")
+        player = world.get(camera["target_entity_id"])
+
+        x_max_off = screen.get_width() * 0.40
+        x_min_off = screen.get_width() * 0.15
+
+        y_top_off = screen.get_height() * 0.40
+        y_bottom_off = screen.get_height() * 0.55
+
+        # Keep the player with in the above bounds of the screen
+        if camera.x <= player.position.x - x_max_off:
+            camera.x = player.position.x - x_max_off
+        if camera.x >= player.position.x - x_min_off:
+            camera.x = player.position.x - x_min_off
+
+        if camera.y >= player.position.y - y_top_off:
+            camera.y = player.position.y - y_top_off
+        if camera.y <= player.position.y - y_bottom_off:
+            camera.y = player.position.y - y_bottom_off
+
+        if camera.x < 0:
+            camera.x = 0
+        if camera.y > 0:
+            camera.y = 0
+
+
+def calculate_altitude(player, screen):
+    sprite_height = player.graphic.sprite.image.get_height()
+    return abs(player.position.y - screen.get_height() + sprite_height)
+
+
 class GameScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(None, 36)
@@ -193,15 +237,24 @@ class GameScene(Scene):
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
-        player_entity.attach(PositionComponent(100, 100))
+        player_entity.attach(PositionComponent(100, -300))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
         player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
 
+        # Create the camera
+        camera_entity = world.gen_entity()
+        camera_entity.attach(CameraComponent(player_entity.id))
+
         # System registration
-        self.systems = [ForceSystem(), MovementSystem(), GlidingSystem()]
+        self.systems = [
+            ForceSystem(),
+            MovementSystem(),
+            GlidingSystem(),
+            CameraSystem(),
+        ]
         for sys in self.systems:
             world.register_system(sys)
 
@@ -254,6 +307,7 @@ class GameScene(Scene):
 
         graphical_entities = world.filter("graphic")
         player_entity = world.find_entity("player")
+        camera = world.find_component("camera")
 
         screen.blit(background, (0, 0))
 
@@ -262,7 +316,9 @@ class GameScene(Scene):
             # Is there a better way to do this? Will there ever be a graphical entity WITHOUT a position/rotation?
             image = entity.graphic.sprite.image
             rotated_image = pygame.transform.rotate(image, entity.rotation.angle * -1)
-            screen.blit(rotated_image, (entity.position.x, entity.position.y))
+            adjusted_x = entity.position.x - camera.x
+            adjusted_y = entity.position.y - camera.y
+            screen.blit(rotated_image, (adjusted_x, adjusted_y))
 
         # text
         text = self.font.render(
@@ -285,6 +341,22 @@ class GameScene(Scene):
         )
         screen.blit(text, (10, 375))
 
+        text = self.font.render(f"x: {player_entity.position.x}", True, (10, 10, 10))
+        screen.blit(text, (10, 400))
+
+        text = self.font.render(f"y: {player_entity.position.y}", True, (10, 10, 10))
+        screen.blit(text, (10, 425))
+
+        text = self.font.render(f"camera x: {camera.x}", True, (10, 10, 10))
+        screen.blit(text, (10, 450))
+
+        text = self.font.render(f"camera y: {camera.y}", True, (10, 10, 10))
+        screen.blit(text, (10, 475))
+
+        altitude = calculate_altitude(player_entity, screen)
+        text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
+        screen.blit(text, (10, 500))
+
         # This is bad - only putting it here so we can display acceleration for debug purposes
         # Let's figure out a better way to do this
         player_entity.physics.acceleration = 0
@@ -294,7 +366,8 @@ class GameScene(Scene):
 
     def teardown(self, world):
         player = world.find_entity("player")
-        world.remove_entity(player)
+        camera = world.find_entity("camera")
+        world.remove_entities([player, camera])
 
         for sys in self.systems:
             world.unregister_system(sys)
