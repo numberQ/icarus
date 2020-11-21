@@ -1,6 +1,9 @@
 import os
 import sys
 
+APP_NAME = "Icarus"
+APP_AUTHOR = "Technical Incompetence"
+
 
 def find_data_file(filename):
     if getattr(sys, "frozen", False):

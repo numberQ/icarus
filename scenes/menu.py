@@ -1,12 +1,14 @@
 from os import path
 
 import pygame
+from appdirs import user_data_dir
 from pygame.event import Event, post
 
 from button import ButtonComponent, render_all_buttons
 from game_events import CONTINUE, NEW_GAME, QUIT
 from scene import Scene, SceneManager
 from scenes.game import GameScene
+from utils import APP_AUTHOR, APP_NAME
 
 
 class MenuScene(Scene):
@@ -21,7 +23,9 @@ class MenuScene(Scene):
         # menu setup
         men = []
         men.append(("New Game", lambda: post(Event(NEW_GAME))))
-        if path.exists(settings["save_file"]):
+        if path.exists(
+            path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
+        ):
             men.append(("Continue", lambda: post(Event(CONTINUE))))
         men.append(("Quit", lambda: post(Event(QUIT))))
 
