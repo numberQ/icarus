@@ -8,11 +8,6 @@ from scene import Scene, SceneManager
 from scenes.pause import PauseScene
 
 
-def truncate(number, decimal_places) -> float:
-    stepper = 10.0 ** decimal_places
-    return math.trunc(stepper * number) / stepper
-
-
 class GraphicComponent(Component):
     """
     For visible entities that have a sprite.
@@ -105,46 +100,18 @@ class ForceSystem(System):
         physics_entities = set(world.filter("physics"))
 
         for event in events:
-            added_magnitude = event["magnitude"]
-            angle = event["angle"]
-
-            if added_magnitude == 0:
-                continue
-
-            if added_magnitude < 0:
-                added_magnitude *= -1
-                angle += 180
-                angle %= 360
 
             for entity in physics_entities:
 
-                if entity.physics.force_magnitude == 0:
-                    entity.physics.force_magnitude = added_magnitude
-                    entity.physics.force_angle = angle
-                    continue
-
-                current_magnitude = entity.physics.force_magnitude
-                theta = math.radians(angle - entity.physics.force_angle)
-
-                resultant_magnitude = math.sqrt(
-                    pow(current_magnitude, 2)
-                    + pow(added_magnitude, 2)
-                    + 2 * current_magnitude * added_magnitude * math.cos(theta)
+                (
+                    entity.physics.force_magnitude,
+                    entity.physics.force_angle,
+                ) = vector_addition(
+                    event["magnitude"],
+                    entity.physics.force_magnitude,
+                    event["angle"],
+                    entity.physics.force_angle,
                 )
-
-                # When all forces are in perfect equilibrium, resultant magnitude will be 0.
-                # Because we can't divide by 0, handle that edge case without the Law of Sines.
-                if resultant_magnitude == 0:
-                    resultant_theta = 0
-                else:
-                    resultant_theta = math.degrees(
-                        math.asin(
-                            added_magnitude * math.sin(theta) / resultant_magnitude
-                        )
-                    )
-
-                entity.physics.force_magnitude = resultant_magnitude
-                entity.physics.force_angle += resultant_theta
 
 
 class MovementSystem(System):
@@ -173,54 +140,62 @@ class MovementSystem(System):
             entity.physics.force_angle = round(entity.physics.force_angle, 5)
 
             if entity.physics.velocity_magnitude == 0:
+
                 entity.physics.velocity_magnitude = (
                     entity.physics.force_magnitude / entity.physics.mass
                 )
                 entity.physics.velocity_angle = entity.physics.force_angle
+
             else:
+
                 acceleration = entity.physics.force_magnitude / entity.physics.mass
                 velocity = entity.physics.velocity_magnitude
-                theta = math.radians(
-                    entity.physics.force_angle - entity.physics.velocity_angle
+
+                (
+                    entity.physics.velocity_magnitude,
+                    entity.physics.velocity_angle,
+                ) = vector_addition(
+                    acceleration,
+                    velocity,
+                    entity.physics.force_angle,
+                    entity.physics.velocity_angle,
                 )
 
-                resultant_magnitude = math.sqrt(
-                    pow(velocity, 2)
-                    + pow(acceleration, 2)
-                    + 2 * velocity * acceleration * math.cos(theta)
-                )
-                resultant_theta = math.degrees(
-                    math.asin(acceleration * math.sin(theta) / resultant_magnitude)
-                )
+            if abs(entity.physics.velocity_magnitude) < 5:
 
-                entity.physics.velocity_magnitude = resultant_magnitude
-                entity.physics.velocity_angle += resultant_theta
+                # At a certain point, approach 0 faster than normal drag would. This makes the game feel better.
+                drag_magnitude = entity.physics.velocity_magnitude / 50
 
-            # Drag equation
-            min_cross_section = 0.1
-            max_cross_section = 0.5
-            cross_sectional_area = min_cross_section + (
-                max_cross_section - min_cross_section
-            ) * math.sin(
-                math.radians(entity.rotation.angle - entity.physics.velocity_angle)
-            )
-            drag_magnitude = (
-                0.5  # Drag magnitude is always divided by 2
-                * 0.9  # Drag coefficient
-                * 1.22  # Air density
-                * cross_sectional_area
-                * pow(entity.physics.velocity_magnitude, 2)
-                / entity.physics.mass
-            )
+            else:
+
+                min_cross_section = 0.1
+                max_cross_section = 0.75
+                cross_sectional_area = min_cross_section + (
+                    max_cross_section - min_cross_section
+                ) * math.sin(
+                    math.radians(entity.rotation.angle - entity.physics.velocity_angle)
+                )
+                # Aerodynamic drag equation
+                drag_magnitude = (
+                    0.5  # Drag magnitude is always divided by 2
+                    * 0.5  # Drag coefficient (varies by material)
+                    * 1.22  # Air density (1.22 in normal atmospheric conditions)
+                    * cross_sectional_area
+                    * pow(entity.physics.velocity_magnitude, 2)
+                    / entity.physics.mass
+                )
 
             # Drag force always acts in the opposite direction of velocity,
             # so we can simply modify magnitude without worrying about angle.
             entity.physics.velocity_magnitude -= drag_magnitude
 
-            entity.physics.velocity_angle = round(entity.physics.velocity_angle, 5)
+            entity.physics.velocity_angle = round(entity.physics.velocity_angle, 3)
             entity.physics.velocity_magnitude = round(
-                entity.physics.velocity_magnitude, 5
+                entity.physics.velocity_magnitude, 3
             )
+
+            if entity.physics.velocity_magnitude <= 0.01:
+                entity.physics.velocity_magnitude = 0
 
             speed = entity.physics.velocity_magnitude
             radians = math.radians(entity.physics.velocity_angle)
@@ -263,8 +238,8 @@ class GlidingSystem(System):
             )
             lift_magnitude = (
                 0.5  # Lift magnitude is always divided by 2
-                * 1.5  # Lift coefficient
-                * 1.22  # Air density
+                * 0.5  # Lift coefficient (varies by material)
+                * 1.22  # Air density (1.22 in normal atmsopheric conditions)
                 * wing_planform_area
                 * pow(velocity_in_flow_direction, 2)
             ) * math.copysign(1, velocity_in_flow_direction)
@@ -295,7 +270,9 @@ class PhysicsFrameResetSystem(System):
         for entity in physics_entities:
             entity.physics.force_magnitude = 0
             entity.physics.force_angle = 0
-            entity.physics.velocity_angle %= 360
+            entity.physics.velocity_angle %= 360 * math.copysign(
+                1, entity.physics.velocity_angle
+            )
 
 
 class PlayerSprite(Sprite):
@@ -304,6 +281,42 @@ class PlayerSprite(Sprite):
 
         self.image = pygame.image.load(image_path)
         self.rect = self.image.get_rect()
+
+
+def vector_addition(mag1, mag2, ang1, ang2) -> (float, float):
+
+    if mag1 == 0:
+        return mag2, ang2
+
+    if mag2 == 0:
+        return mag1, ang1
+
+    if mag1 < 0:
+        mag1 *= -1
+        ang1 += 180
+        ang1 %= 360
+
+    if mag2 < 0:
+        mag2 *= -1
+        ang2 += 180
+        ang2 %= 360
+
+    theta = math.radians(ang1 - ang2)
+
+    resultant_magnitude = math.sqrt(
+        pow(mag1, 2) + pow(mag2, 2) + 2 * mag1 * mag2 * math.cos(theta)
+    )
+
+    # When all forces are in perfect equilibrium, resultant magnitude will be 0.
+    # Because we can't divide by 0, handle that edge case without the Law of Sines.
+    if resultant_magnitude == 0:
+        resultant_theta = 0
+    else:
+        resultant_theta = math.degrees(
+            math.asin(mag1 * math.sin(theta) / resultant_magnitude)
+        )
+
+    return resultant_magnitude, ang2 + resultant_theta
 
 
 class GameScene(Scene):
