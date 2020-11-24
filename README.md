@@ -15,3 +15,18 @@ Install the pre-commit hooks: (Yes Drew, this step comes last.)
 ```sh
 pre-commit install
 ```
+
+# Building for distribution
+
+Windows:
+```
+python setup.py bdist_msi
+```
+
+Mac:
+```
+python setup.py bdist_mac
+```
+
+Linux:
+Chris you can figure this one out

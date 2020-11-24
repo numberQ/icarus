@@ -6,11 +6,15 @@ from ecs import WORLD, Component
 from scene import SceneManager
 from scenes.title import TitleScene
 from sound import AudioSystem
+from utils import find_data_file
 
 
 def main():
     # Initialize pygame before we do anything else
     pygame.init()
+
+    programIcon = pygame.image.load(find_data_file("resources/icarus_icon.png"))
+    pygame.display.set_icon(programIcon)
 
     # Initialize global systems in the game world
     if pygame.mixer.get_init() is not None:

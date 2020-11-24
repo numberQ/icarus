@@ -3,6 +3,7 @@ import json
 import pygame
 
 from ecs import System
+from utils import find_data_file
 
 
 class AudioSystem(System):
@@ -10,12 +11,12 @@ class AudioSystem(System):
         super().__init__()
         self.subscribe("sound")
 
-        with open("resources/audio.json", "r") as f:
+        with open(find_data_file("resources/audio.json"), "r") as f:
             self.audio_table = json.load(f)
 
         self.audio_files = {}
         for (key, value) in self.audio_table.items():
-            self.audio_files[key] = pygame.mixer.Sound(value)
+            self.audio_files[key] = pygame.mixer.Sound(find_data_file(value))
 
         self.started_sounds = []
         self.previously_paused = False

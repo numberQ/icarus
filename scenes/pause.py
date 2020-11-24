@@ -1,10 +1,14 @@
+import os
+
 import pygame
+from appdirs import user_data_dir
 from pygame.event import Event, post
 
 import scenes.title
 from button import ButtonComponent, render_all_buttons
 from game_events import PAUSE_CONTINUE, PAUSE_QUIT_TO_MENU, PAUSE_SAVE_AND_QUIT
 from scene import Scene, SceneManager
+from utils import APP_AUTHOR, APP_NAME
 
 
 class PauseScene(Scene):
@@ -103,7 +107,9 @@ class PauseScene(Scene):
         render_all_buttons(screen, world)
 
     def _save(self, save_file):
-        f = open(save_file, "w")
+        if not os.path.exists(user_data_dir(APP_NAME, APP_AUTHOR)):
+            os.makedirs(user_data_dir(APP_NAME, APP_AUTHOR))
+        f = open(os.path.join(user_data_dir(APP_NAME, APP_AUTHOR), save_file), "w")
         f.write("{'title': 'Now the file has more content!'}")
         f.close()
 
