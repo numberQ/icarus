@@ -26,7 +26,7 @@ def main():
     WORLD.gen_entity().attach(settings)
 
     # Set up the pygame window
-    screen = pygame.display.set_mode((settings["height"], settings["width"]))
+    screen = pygame.display.set_mode((settings["height"], settings["width"]), vsync=1)
     pygame.display.set_caption(settings["title"])
 
     # Store our dynamic resources that are created at runtime in the game world
@@ -59,7 +59,7 @@ def main():
 
         # Render the current scene
         manager.render(WORLD)
-        pygame.display.update()  # Double buffers whatever was on the screen object to the actual display
+        pygame.display.flip()  # Double buffers whatever was on the screen object to the actual display
 
         # Finally switch scenes in the scene manager
         manager.switch(switch_event, WORLD)

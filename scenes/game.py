@@ -172,6 +172,16 @@ class GlidingSystem(System):
             )
 
 
+class BackgroundComponent(Component):
+    def __init__(self, image_path, y):
+        metadata = {
+            "image": pygame.image.load(find_data_file(image_path)),
+            "x": 0,
+            "y": y,
+        }
+        Component.__init__(self, "background", metadata)
+
+
 class PlayerSprite(Sprite):
     def __init__(self, image_path):
         Sprite.__init__(self)
@@ -220,6 +230,8 @@ class CameraSystem(System):
             camera.x = 0
         if camera.y > 0:
             camera.y = 0
+        if camera.y < -2540:
+            camera.y = -2540
 
 
 def calculate_altitude(player, screen):
@@ -238,12 +250,25 @@ class GameScene(Scene):
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
-        player_entity.attach(PositionComponent(100, -300))
+        player_entity.attach(PositionComponent(100, 0))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
         player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
+
+        # Scrolling background - layers defined by the y coord
+        world.gen_entity().attach(BackgroundComponent("resources/bg_space.png", -2540))
+        world.gen_entity().attach(BackgroundComponent("resources/bg_space.png", -2040))
+        world.gen_entity().attach(
+            BackgroundComponent("resources/bg_sky-space.png", -1540)
+        )
+        world.gen_entity().attach(BackgroundComponent("resources/bg_sky.png", -1040))
+        world.gen_entity().attach(BackgroundComponent("resources/bg_sky.png", -540))
+        world.gen_entity().attach(BackgroundComponent("resources/bg_sky.png", -40))
+        world.gen_entity().attach(
+            BackgroundComponent("resources/bg_cityscape.png", 460)
+        )
 
         # Create the camera
         camera_entity = world.gen_entity()
@@ -310,7 +335,19 @@ class GameScene(Scene):
         player_entity = world.find_entity("player")
         camera = world.find_component("camera")
 
-        screen.blit(background, (0, 0))
+        # City background
+        backgrounds = world.filter("background")
+        for background in backgrounds:
+            background = background.background
+            x = background.x - camera.x
+            if x < -500:
+                # TODO: does an offset help?
+                background.x = camera.x  # - (x + 500)
+            if x > 0:
+                # TODO: does an offset help?
+                background.x = camera.x - 500  # + x
+            y = background.y - camera.y
+            screen.blit(background.image, (x, y))
 
         for entity in graphical_entities:
             # We're assuming all graphical entities also have a position and rotation.
@@ -342,21 +379,9 @@ class GameScene(Scene):
         )
         screen.blit(text, (10, 375))
 
-        text = self.font.render(f"x: {player_entity.position.x}", True, (10, 10, 10))
-        screen.blit(text, (10, 400))
-
-        text = self.font.render(f"y: {player_entity.position.y}", True, (10, 10, 10))
-        screen.blit(text, (10, 425))
-
-        text = self.font.render(f"camera x: {camera.x}", True, (10, 10, 10))
-        screen.blit(text, (10, 450))
-
-        text = self.font.render(f"camera y: {camera.y}", True, (10, 10, 10))
-        screen.blit(text, (10, 475))
-
         altitude = calculate_altitude(player_entity, screen)
         text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
-        screen.blit(text, (10, 500))
+        screen.blit(text, (10, 450))
 
         # This is bad - only putting it here so we can display acceleration for debug purposes
         # Let's figure out a better way to do this
