@@ -26,7 +26,10 @@ def main():
     WORLD.gen_entity().attach(settings)
 
     # Set up the pygame window
-    screen = pygame.display.set_mode((settings["height"], settings["width"]), vsync=1)
+    flags = pygame.SCALED
+    screen = pygame.display.set_mode(
+        (settings["height"], settings["width"]), flags=flags, vsync=1
+    )
     pygame.display.set_caption(settings["title"])
 
     # Store our dynamic resources that are created at runtime in the game world
