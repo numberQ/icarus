@@ -136,3 +136,6 @@ dmypy.json
 
 # Save data
 save_data.json
+
+# macOS
+.DS_Store

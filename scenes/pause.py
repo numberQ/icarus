@@ -1,3 +1,4 @@
+import json
 import os
 
 import pygame
@@ -41,11 +42,8 @@ class PauseScene(Scene):
             button = world.gen_entity()
             button.attach(
                 ButtonComponent(
-                    pygame.Color("green"),
-                    pygame.Color("red"),
                     rect,
                     menu_item[0].upper(),
-                    pygame.Color("black"),
                     menu_item[1],
                 )
             )
@@ -69,7 +67,7 @@ class PauseScene(Scene):
                 context["paused"] = False
                 return SceneManager.pop()
             elif event.type == PAUSE_SAVE_AND_QUIT:
-                self._save(settings["save_file"])
+                self._save(settings["save_file"], world)
                 context["paused"] = False
                 exiting = True
             elif event.type == PAUSE_QUIT_TO_MENU:
@@ -106,11 +104,18 @@ class PauseScene(Scene):
         # Display the buttons
         render_all_buttons(screen, world)
 
-    def _save(self, save_file):
+    def _save(self, save_file, world):
         if not os.path.exists(user_data_dir(APP_NAME, APP_AUTHOR)):
             os.makedirs(user_data_dir(APP_NAME, APP_AUTHOR))
         f = open(os.path.join(user_data_dir(APP_NAME, APP_AUTHOR), save_file), "w")
-        f.write("{'title': 'Now the file has more content!'}")
+        player_entity = world.find_entity("player")
+        out = {
+            "currency": player_entity.player.currency,
+            "hasCloudSleeves": player_entity.player.hasCloudSleeves,
+            "hasWings": player_entity.player.hasWings,
+            "hasJetBoots": player_entity.player.hasJetBoots,
+        }
+        f.write(json.dumps(out))
         f.close()
 
     def render_previous(self):

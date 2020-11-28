@@ -23,3 +23,19 @@ class MovementComponent(Component):
     def __init__(self, xvel=0, yvel=0, xaccel=0, yaccel=0):
         metadata = {"xvel": xvel, "yvel": yvel, "xaccel": xaccel, "yaccel": yaccel}
         Component.__init__(self, "movement", metadata)
+
+
+class PlayerComponent(Component):
+    """
+    For the player entity. Reacts to user inputs.
+    """
+
+    def __init__(self):
+        metadata = {
+            "has_jumped": False,
+            "currency": 0,
+            "hasCloudSleeves": 0,
+            "hasWings": 0,
+            "hasJetBoots": 0,
+        }
+        Component.__init__(self, "player", metadata)

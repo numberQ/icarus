@@ -51,16 +51,6 @@ class RotationComponent(Component):
         Component.__init__(self, "rotation", metadata)
 
 
-class PlayerComponent(Component):
-    """
-    For the player entity. Reacts to user inputs.
-    """
-
-    def __init__(self):
-        metadata = {"has_jumped": False}
-        Component.__init__(self, "player", metadata)
-
-
 class GlidingComponent(Component):
     """
     For any entity that requires gliding physics. Allows the GlidingSystem to find it.
@@ -274,14 +264,15 @@ class GameScene(Scene):
     def setup(self, world):
 
         # Player entity setup
-        player_entity = world.gen_entity()
+        # player_entity = world.gen_entity()
+        player_entity = world.find_entity("player")
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
         player_entity.attach(PositionComponent(100, 0))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
-        player_entity.attach(PlayerComponent())
+        # player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
 
@@ -434,6 +425,11 @@ class GameScene(Scene):
         altitude = calculate_altitude(player_entity, screen)
         text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
         screen.blit(text, (10, 450))
+
+        text = self.font.render(
+            f"Currency: {player_entity.player.currency}", True, (245, 245, 245)
+        )
+        screen.blit(text, (50, 50))
 
     def render_previous(self):
         return False

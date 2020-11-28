@@ -1,3 +1,4 @@
+import json
 from os import path
 
 import pygame
@@ -5,8 +6,10 @@ from appdirs import user_data_dir
 from pygame.event import Event, post
 
 from button import ButtonComponent, render_all_buttons
+from common_components import PlayerComponent
 from game_events import CONTINUE, NEW_GAME, QUIT
 from scene import Scene, SceneManager
+from scenes.equip import EquipScene
 from scenes.game import GameScene
 from utils import APP_AUTHOR, APP_NAME
 
@@ -19,6 +22,10 @@ class MenuScene(Scene):
         context = world.find_component("context")
         settings = world.find_component("settings")
         background = context["background"]
+
+        # Create our player entity here, and we can extend it once we pick an option
+        player_entity = world.gen_entity()
+        player_entity.attach(PlayerComponent())
 
         # menu setup
         men = []
@@ -39,11 +46,8 @@ class MenuScene(Scene):
             button = world.gen_entity()
             button.attach(
                 ButtonComponent(
-                    pygame.Color("green"),
-                    pygame.Color("red"),
                     rect,
                     m[0].upper(),
-                    pygame.Color("black"),
                     m[1],
                 )
             )
@@ -54,7 +58,28 @@ class MenuScene(Scene):
                 return SceneManager.new_root(GameScene())
             if event.type == CONTINUE:
                 # we have no data to save right now, so just start a fresh game if we have a save file
-                return SceneManager.new_root(GameScene())
+                settings = world.find_component("settings")
+                if path.exists(
+                    path.join(
+                        user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"]
+                    )
+                ):
+                    with open(
+                        path.join(
+                            user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"]
+                        ),
+                        "r",
+                    ) as f:
+                        loaded_json = json.load(f)
+                        player_entity = world.find_entity("player")
+                        player_entity.player.currency = loaded_json["currency"]
+                        player_entity.player.hasCloudSleeves = loaded_json[
+                            "hasCloudSleeves"
+                        ]
+                        player_entity.player.hasWings = loaded_json["hasWings"]
+                        player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
+                self.teardown(world)
+                return SceneManager.push(EquipScene())
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return SceneManager.pop()
 
