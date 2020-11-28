@@ -55,7 +55,7 @@ class World:
     #     WORLD.filter('player')[0]
     def find_entity(self, component):
         filtered = self.filter(component)
-        return filtered[0] if filtered is not [] else None
+        return filtered[0] if filtered != [] else None
 
     # Query method that returns an entity given a particular id. This is useful for cross referencing entities. For example,
     # entity A could store entity B's ID in a component. This would then allow you to look up entity B while analyzing entity A.
@@ -69,7 +69,8 @@ class World:
 
     # Unregisters a system with the world so it will stop being run
     def unregister_system(self, system):
-        self.systems.remove(system)
+        if system in self.systems:
+            self.systems.remove(system)
 
     # Calling this method injects an event into the world. In the implementation, all events are buffered until the systems are processed. This makes it so
     # all systems see the same events every frame, instead of System B adding an event before System C runs. In the old arch, System A (which ran before system B)

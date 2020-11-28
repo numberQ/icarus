@@ -5,6 +5,7 @@ from pygame.sprite import Sprite
 
 from ecs import Component, System
 from scene import Scene, SceneManager
+from scenes.crash_results import CrashResultsScene
 from scenes.pause import PauseScene
 from utils import find_data_file
 
@@ -254,7 +255,7 @@ class CameraSystem(System):
 
 def calculate_altitude(player, screen):
     sprite_height = player.graphic.sprite.image.get_height()
-    return abs(player.position.y - screen.get_height() + sprite_height)
+    return player.position.y - screen.get_height() + sprite_height
 
 
 class GameScene(Scene):
@@ -305,6 +306,8 @@ class GameScene(Scene):
             world.register_system(sys)
 
     def update(self, events, world):
+        context = world.find_component("context")
+        screen = context["screen"]
 
         # There will only ever be one player entity, unless scope drastically changes
         player_entity = world.filter("player")[0]
@@ -323,6 +326,11 @@ class GameScene(Scene):
 
             # Finally, we add movement after any events that could affect acceleration
             world.inject_event({"type": "move"})
+
+            if calculate_altitude(player_entity, screen) > 0:
+                for sys in self.systems:
+                    world.unregister_system(sys)
+                return SceneManager.push(CrashResultsScene())
 
         world.process_all_systems(events)
 
@@ -401,33 +409,33 @@ class GameScene(Scene):
             adjusted_y = entity.position.y - camera.y
             screen.blit(rotated_image, (adjusted_x, adjusted_y))
 
-        # text
-        text = self.font.render(
-            f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 300))
+        # # text
+        # text = self.font.render(
+        #     f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 300))
+
+        # text = self.font.render(
+        #     f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 325))
+
+        # text = self.font.render(
+        #     f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 350))
+
+        # text = self.font.render(
+        #     f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 375))
+
+        # altitude = calculate_altitude(player_entity, screen)
+        # text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
+        # screen.blit(text, (10, 450))
 
         text = self.font.render(
-            f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 325))
-
-        text = self.font.render(
-            f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 350))
-
-        text = self.font.render(
-            f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 375))
-
-        altitude = calculate_altitude(player_entity, screen)
-        text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
-        screen.blit(text, (10, 450))
-
-        text = self.font.render(
-            f"Currency: {player_entity.player.currency}", True, (245, 245, 245)
+            f"${player_entity.player.currency}", True, (245, 245, 245)
         )
         screen.blit(text, (50, 50))
 
@@ -437,7 +445,11 @@ class GameScene(Scene):
     def teardown(self, world):
         player = world.find_entity("player")
         camera = world.find_entity("camera")
-        world.remove_entities([player, camera])
+
+        if player is not None:
+            world.remove_entities([player, camera])
+        else:
+            world.remove_entities([camera])
 
         for sys in self.systems:
             world.unregister_system(sys)
