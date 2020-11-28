@@ -6,4 +6,6 @@ CONTINUE = pygame.event.custom_type()
 PAUSE_CONTINUE = pygame.event.custom_type()
 PAUSE_SAVE_AND_QUIT = pygame.event.custom_type()
 PAUSE_QUIT_TO_MENU = pygame.event.custom_type()
+EQUIP_QUIT = pygame.event.custom_type()
+EQUIP_SAVE_AND_START = pygame.event.custom_type()
 QUIT = pygame.QUIT
