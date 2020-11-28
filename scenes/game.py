@@ -57,7 +57,8 @@ class PlayerComponent(Component):
     """
 
     def __init__(self):
-        Component.__init__(self, "player", {})
+        metadata = {"has_jumped": False}
+        Component.__init__(self, "player", metadata)
 
 
 class GlidingComponent(Component):
@@ -76,6 +77,30 @@ class GravityComponent(Component):
 
     def __init__(self):
         Component.__init__(self, "gravity", {})
+
+
+class PhysicsFrameResetSystem(System):
+    def __init__(self):
+        super().__init__()
+        self.subscribe("physics_frame_reset")
+
+    def process(self, events, world):
+        if world.find_component("context")["paused"]:
+            return
+
+        # If we haven't been asked to reset, don't reset
+        events = self.pending()
+        if not events:
+            return
+
+        # get entities that need reset
+        physics_entities = set(world.filter("physics"))
+
+        for entity in physics_entities:
+
+            # For now, this is the only thing that needs reset.
+            # In in the future, we might also reset forces acting on the entity.
+            entity.physics.acceleration = 0
 
 
 class ForceSystem(System):
@@ -124,8 +149,10 @@ class MovementSystem(System):
         if world.find_component("context")["paused"]:
             return
 
-        # Clear event queue
-        self.pending()
+        # If we haven't been asked to move, don't move
+        events = self.pending()
+        if not events:
+            return
 
         physics_entities = set(world.filter("physics"))
 
@@ -136,12 +163,11 @@ class MovementSystem(System):
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
+            # very simplistic gravity
+            yy += 3
+
             entity.position.x = xx
             entity.position.y = yy
-
-            # Reset acceleration so we can calculate it fresh next frame
-            # THIS IS CURRENTLY HAPPENING IN THE SCENE RENDER - NEED TO FIGURE OUT A BETTER WAY
-            # entity.physics.acceleration = 0
 
 
 class GlidingSystem(System):
@@ -154,8 +180,10 @@ class GlidingSystem(System):
         if world.find_component("context")["paused"]:
             return
 
-        # Clear event queue
-        self.pending()
+        # If we haven't been asked to glide, don't glide
+        events = self.pending()
+        if not events:
+            return
 
         gliders = world.filter("gliding")
 
@@ -276,6 +304,7 @@ class GameScene(Scene):
 
         # System registration
         self.systems = [
+            PhysicsFrameResetSystem(),
             ForceSystem(),
             MovementSystem(),
             GlidingSystem(),
@@ -284,42 +313,65 @@ class GameScene(Scene):
         for sys in self.systems:
             world.register_system(sys)
 
-        world.inject_event(
-            {
-                "type": "sound",
-                "action": "start",
-                "sound": "background_music",
-            }
-        )
-
     def update(self, events, world):
-
-        # Gravity comes first
-        world.inject_event({"type": "physics_force", "magnitude": 0, "angle": 90})
-
-        # Then gliding, which translates rotation into acceleration
-        world.inject_event({"type": "glide"})
-
-        # Finally, we add movement after any events that could affect acceleration
-        world.inject_event({"type": "move"})
-
-        world.process_all_systems(events)
 
         # There will only ever be one player entity, unless scope drastically changes
         player_entity = world.filter("player")[0]
 
+        # No physics until the player has jumped
+        if player_entity.player.has_jumped:
+
+            # First, clear out per-frame physics values
+            world.inject_event({"type": "physics_frame_reset"})
+
+            # TODO: Simulate gravity as a force, instead of just doing it in the movement system
+            # world.inject_event({"type": "physics_force", "magnitude": 0, "angle": 90})
+
+            # Then gliding, which translates rotation into acceleration
+            world.inject_event({"type": "glide"})
+
+            # Finally, we add movement after any events that could affect acceleration
+            world.inject_event({"type": "move"})
+
+        world.process_all_systems(events)
+
         keys = pygame.key.get_pressed()
 
-        # The player only has direct control over their angle from the ground.
-        # Our rudimentary physics takes care of the rest.
-        # Also, clamp the angle from straight up to straight down. Otherwise things get out of control.
-        # Must improve physics engine before allowing full 360 degree rotation.
-        if keys[pygame.K_RIGHT]:
-            angle = player_entity.rotation.angle + 1
-            player_entity.rotation.angle = min(angle, 90)
-        if keys[pygame.K_LEFT]:
-            angle = player_entity.rotation.angle - 1
-            player_entity.rotation.angle = max(angle, -90)
+        # Before doing anything else, the player must jump off the cliff
+        if not player_entity.player.has_jumped:
+
+            if keys[pygame.K_SPACE]:
+
+                # Tell everyone we've jumped
+                player_entity.player.has_jumped = True
+
+                # The jump itself
+                world.inject_event(
+                    {"type": "physics_force", "magnitude": 5, "angle": -20}
+                )
+
+                # Start background music
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "start",
+                        "sound": "background_music",
+                    }
+                )
+
+        # We don't want to rotate before jumping.
+        # TODO: or do we?
+        else:
+
+            # The player only has direct control over their angle from the ground.
+            # Our rudimentary physics takes care of the rest.
+            # Also, clamp the angle from straight up to straight down.
+            if keys[pygame.K_RIGHT]:
+                angle = player_entity.rotation.angle + 1
+                player_entity.rotation.angle = min(angle, 90)
+            if keys[pygame.K_LEFT]:
+                angle = player_entity.rotation.angle - 1
+                player_entity.rotation.angle = max(angle, -90)
 
         for event in events:
             # Use keyup here as a simple way to only trigger once and not repeatedly
@@ -351,7 +403,7 @@ class GameScene(Scene):
 
         for entity in graphical_entities:
             # We're assuming all graphical entities also have a position and rotation.
-            # Is there a better way to do this? Will there ever be a graphical entity WITHOUT a position/rotation?
+            # TODO: Is there a better way to do this? Will there ever be a graphical entity WITHOUT a position/rotation?
             image = entity.graphic.sprite.image
             rotated_image = pygame.transform.rotate(image, entity.rotation.angle * -1)
             adjusted_x = entity.position.x - camera.x
@@ -382,10 +434,6 @@ class GameScene(Scene):
         altitude = calculate_altitude(player_entity, screen)
         text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
         screen.blit(text, (10, 450))
-
-        # This is bad - only putting it here so we can display acceleration for debug purposes
-        # Let's figure out a better way to do this
-        player_entity.physics.acceleration = 0
 
     def render_previous(self):
         return False
