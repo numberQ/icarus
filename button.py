@@ -19,7 +19,7 @@ def _create_image(image_path, text, is_disabled, btn_image):
     # render the text once here instead of every frame
     if text != "":
         if is_disabled:
-            text_surf = font.render(text, 1, pygame.Color("black"))
+            text_surf = font.render(text, 1, pygame.Color("gray"))
         else:
             text_surf = font.render(text, 1, pygame.Color("white"))
         # again, see how easy it is to center stuff using Rect's attributes like 'center'

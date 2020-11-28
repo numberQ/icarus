@@ -426,18 +426,11 @@ class GameScene(Scene):
         text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
         screen.blit(text, (10, 450))
 
-<<<<<<< HEAD
-=======
         text = self.font.render(
             f"Currency: {player_entity.player.currency}", True, (245, 245, 245)
         )
         screen.blit(text, (50, 50))
 
-        # This is bad - only putting it here so we can display acceleration for debug purposes
-        # Let's figure out a better way to do this
-        player_entity.physics.acceleration = 0
-
->>>>>>> Create equip scene, move player component somewhere more globally accessible, and create initial working save data implementation
     def render_previous(self):
         return False
 

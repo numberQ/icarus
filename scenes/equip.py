@@ -121,6 +121,18 @@ class EquipScene(Scene):
         for event in events:
             if event.type == EQUIP_QUIT:
                 return SceneManager.new_root(scenes.title.TitleScene())
+            if event.type == EQUIP_BUY_CLOUD_SLEEVES:
+                self._shop(settings["cloudSleevesCost"], "cloud_sleeves", world)
+                self.teardown(world)
+                self.setup(world)
+            if event.type == EQUIP_BUY_WINGS:
+                self._shop(settings["wingsCost"], "wings", world)
+                self.teardown(world)
+                self.setup(world)
+            if event.type == EQUIP_BUY_JET_BOOTS:
+                self._shop(settings["jetBootsCost"], "jet_boots", world)
+                self.teardown(world)
+                self.setup(world)
             if event.type == EQUIP_SAVE_AND_START:
                 self._save(settings["save_file"], world)
                 return SceneManager.new_root(GameScene())
@@ -210,6 +222,19 @@ class EquipScene(Scene):
         }
         f.write(json.dumps(out))
         f.close()
+
+    def _shop(self, cost, item, world):
+        player_entity = world.find_entity("player")
+
+        if player_entity.player.currency >= cost:
+            player_entity.player.currency = player_entity.player.currency - cost
+
+            if item == "cloud_sleeves":
+                player_entity.player.hasCloudSleeves = 1
+            if item == "wings":
+                player_entity.player.hasWings = 1
+            if item == "jet_boots":
+                player_entity.player.hasJetBoots = 1
 
     def render_previous(self):
         return False
