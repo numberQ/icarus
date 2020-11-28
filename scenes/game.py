@@ -366,7 +366,6 @@ class GameScene(Scene):
             # The player only has direct control over their angle from the ground.
             # Our rudimentary physics takes care of the rest.
             # Also, clamp the angle from straight up to straight down.
-            # The player CAN rotate before jumping, which will affect initial glide conditions.
             if keys[pygame.K_RIGHT]:
                 angle = player_entity.rotation.angle + 1
                 player_entity.rotation.angle = min(angle, 90)
