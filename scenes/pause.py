@@ -42,11 +42,8 @@ class PauseScene(Scene):
             button = world.gen_entity()
             button.attach(
                 ButtonComponent(
-                    pygame.Color("green"),
-                    pygame.Color("red"),
                     rect,
                     menu_item[0].upper(),
-                    pygame.Color("black"),
                     menu_item[1],
                 )
             )

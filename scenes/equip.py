@@ -7,7 +7,13 @@ from pygame.event import Event, post
 
 import scenes.title
 from button import ButtonComponent, render_all_buttons
-from game_events import EQUIP_QUIT, EQUIP_SAVE_AND_START
+from game_events import (
+    EQUIP_BUY_CLOUD_SLEEVES,
+    EQUIP_BUY_JET_BOOTS,
+    EQUIP_BUY_WINGS,
+    EQUIP_QUIT,
+    EQUIP_SAVE_AND_START,
+)
 from scene import Scene, SceneManager
 from scenes.game import GameScene
 from utils import APP_AUTHOR, APP_NAME, find_data_file
@@ -16,10 +22,14 @@ from utils import APP_AUTHOR, APP_NAME, find_data_file
 class EquipScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(None, 36)
+        self.big_font = pygame.font.Font(None, 54)
 
     def setup(self, world):
         context = world.find_component("context")
         background = context["background"]
+        settings = world.find_component("settings")
+
+        player_entity = world.find_entity("player")
 
         # menu setup
         men = []
@@ -27,23 +37,83 @@ class EquipScene(Scene):
         men.append(("Save + Start", lambda: post(Event(EQUIP_SAVE_AND_START))))
 
         for idx, m in enumerate(men):
-            offset = -((len(men) * 70) // 2) + 100
+            offset = -((len(men) * 480) // 2) + 240
 
-            rect = pygame.Rect(0, 0, 200, 60)
-            rect.centerx = background.get_width() // 2
-            rect.centery = background.get_height() // 2 + (offset + (idx * 70))
+            rect = pygame.Rect(0, 0, 190, 49)
+            rect.centerx = background.get_width() // 2 + (offset + (idx * 480))
+            rect.centery = background.get_height() - 100
 
             button = world.gen_entity()
             button.attach(
                 ButtonComponent(
-                    pygame.Color("green"),
-                    pygame.Color("red"),
                     rect,
                     m[0].upper(),
-                    pygame.Color("black"),
                     m[1],
                 )
             )
+
+        rect = pygame.Rect(120, 560, 49, 49)
+        jet_boots_button = world.gen_entity()
+        jet_boots_button.attach(
+            ButtonComponent(
+                rect,
+                "Buy" if player_entity.player.hasJetBoots == 0 else "",
+                lambda: post(Event(EQUIP_BUY_JET_BOOTS)),
+                is_small=True,
+                is_disabled=(
+                    player_entity.player.currency < settings["jetBootsCost"]
+                    or player_entity.player.hasJetBoots == 1
+                ),
+                image="resources/checkmark.png"
+                if player_entity.player.hasJetBoots == 1
+                else None,
+            )
+        )
+
+        rect = pygame.Rect(640, 560, 49, 49)
+        cloud_sleeves_button = world.gen_entity()
+        cloud_sleeves_button.attach(
+            ButtonComponent(
+                rect,
+                "Buy" if player_entity.player.hasCloudSleeves == 0 else "",
+                lambda: post(Event(EQUIP_BUY_CLOUD_SLEEVES)),
+                is_small=True,
+                is_disabled=(
+                    player_entity.player.currency < settings["cloudSleevesCost"]
+                    or player_entity.player.hasCloudSleeves == 1
+                ),
+                image="resources/checkmark.png"
+                if player_entity.player.hasCloudSleeves == 1
+                else None,
+            )
+        )
+
+        rect = pygame.Rect(640, 660, 49, 49)
+        wings_button = world.gen_entity()
+        wings_button.attach(
+            ButtonComponent(
+                rect,
+                text="Buy"
+                if player_entity.player.hasCloudSleeves == 1
+                and player_entity.player.hasWings == 0
+                else "",
+                callback=lambda: post(Event(EQUIP_BUY_WINGS)),
+                is_small=True,
+                is_disabled=(
+                    (
+                        player_entity.player.currency < settings["wingsCost"]
+                        and player_entity.player.hasCloudSleeves == 1
+                    )
+                    or player_entity.player.hasCloudSleeves == 0
+                    or player_entity.player.hasWings == 1
+                ),
+                image="resources/locked.png"
+                if player_entity.player.hasCloudSleeves == 0
+                else "resources/checkmark.png"
+                if player_entity.player.hasWings == 1
+                else None,
+            )
+        )
 
     def update(self, events, world):
         settings = world.find_component("settings")
@@ -59,6 +129,7 @@ class EquipScene(Scene):
 
     def render(self, world):
         context = world.find_component("context")
+        settings = world.find_component("settings")
         screen = context["screen"]
 
         player_entity = world.find_entity("player")
@@ -73,8 +144,58 @@ class EquipScene(Scene):
         )
         screen.blit(text, (50, 50))
 
+        text = self.big_font.render("Legs:", True, (245, 245, 245))
+        screen.blit(text, (120, 480))
+        pygame.draw.line(screen, (245, 245, 245), (120, 518), (220, 518), width=8)
+
+        text = self.font.render("Jet Booster", True, (245, 245, 245))
+        screen.blit(text, (180, 572))
+        if player_entity.player.hasJetBoots == 1:
+            text = self.font.render("Owned", True, (245, 245, 245))
+        else:
+            text = self.font.render(
+                f"Cost: {settings['jetBootsCost']}", True, (245, 245, 245)
+            )
+        screen.blit(text, (180, 600))
+
+        text = self.big_font.render("Arms:", True, (245, 245, 245))
+        screen.blit(text, (640, 480))
+        pygame.draw.line(screen, (245, 245, 245), (640, 518), (750, 518), width=8)
+
+        text = self.font.render("Cloud Sleeves", True, (245, 245, 245))
+        screen.blit(text, (700, 572))
+        if player_entity.player.hasCloudSleeves == 1:
+            text = self.font.render("Owned", True, (245, 245, 245))
+        else:
+            text = self.font.render(
+                f"Cost: {settings['cloudSleevesCost']}", True, (245, 245, 245)
+            )
+        screen.blit(text, (700, 600))
+
+        text = self.font.render("Bird Wings", True, (245, 245, 245))
+        screen.blit(text, (700, 672))
+        if player_entity.player.hasWings == 1:
+            text = self.font.render("Owned", True, (245, 245, 245))
+        else:
+            text = self.font.render(
+                f"Cost: {settings['wingsCost']}", True, (245, 245, 245)
+            )
+        screen.blit(text, (700, 700))
+
+        # Icarus himself
+        sprite = pygame.sprite.Sprite()
+        sprite.image = pygame.image.load(find_data_file("resources/icarus_body.png"))
+        sprite.image = pygame.transform.scale(sprite.image, (288, 200))
+        sprite.rect = sprite.image.get_rect()
+        sprite.rect.centerx = screen.get_width() // 2
+        sprite.rect.centery = screen.get_height() // 2 - 240
+        screen.blit(sprite.image, sprite.rect)
+
         # Display the buttons
         render_all_buttons(screen, world)
+
+        # Flip display to render lines
+        pygame.display.flip()
 
     def _save(self, save_file, world):
         if not os.path.exists(user_data_dir(APP_NAME, APP_AUTHOR)):

@@ -46,11 +46,8 @@ class MenuScene(Scene):
             button = world.gen_entity()
             button.attach(
                 ButtonComponent(
-                    pygame.Color("green"),
-                    pygame.Color("red"),
                     rect,
                     m[0].upper(),
-                    pygame.Color("black"),
                     m[1],
                 )
             )
