@@ -27,6 +27,8 @@ class EquipScene(Scene):
         self.big_font = pygame.font.Font(
             find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 58
         )
+        self.icarus_offset = 0
+        self.icarus_offset_increment = 1
 
     def setup(self, world):
         context = world.find_component("context")
@@ -208,7 +210,7 @@ class EquipScene(Scene):
         sprite.image = pygame.transform.scale(sprite.image, (288, 200))
         sprite.rect = sprite.image.get_rect()
         sprite.rect.centerx = screen.get_width() // 2
-        sprite.rect.centery = screen.get_height() // 2 - 240
+        sprite.rect.centery = screen.get_height() // 2 - 240 + self.icarus_offset
         screen.blit(sprite.image, sprite.rect)
 
         # Display the buttons
@@ -216,6 +218,11 @@ class EquipScene(Scene):
 
         # Flip display to render lines
         pygame.display.flip()
+
+        self.icarus_offset = self.icarus_offset + self.icarus_offset_increment
+
+        if abs(self.icarus_offset) > 10:
+            self.icarus_offset_increment = self.icarus_offset_increment * -1
 
     def _save(self, save_file, world):
         if not os.path.exists(user_data_dir(APP_NAME, APP_AUTHOR)):
