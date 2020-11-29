@@ -3,6 +3,7 @@ import pygame
 from game_events import SCENE_REFOCUS
 from scene import Scene, SceneManager
 from scenes.menu import MenuScene
+from utils import find_data_file
 
 
 class TitleScene(Scene):
@@ -17,7 +18,7 @@ class TitleScene(Scene):
 
         # Create a sprite for the title
         self.title = pygame.sprite.Sprite()
-        self.title.image = self.title_font.render(settings["title"], 1, (10, 10, 10))
+        self.title.image = self.title_font.render(settings["title"], 1, (240, 240, 240))
         self.title.rect = self.title.image.get_rect(
             centerx=background.get_width() // 2, centery=50
         )
@@ -25,7 +26,7 @@ class TitleScene(Scene):
         # Create a sprite for the Press any key prompt
         self.push_anything = pygame.sprite.Sprite()
         self.push_anything.image = self.regular_font.render(
-            "Press any key", 1, (10, 10, 10)
+            "Press any key", 1, (240, 240, 240)
         )
         self.push_anything.rect = self.push_anything.image.get_rect(
             centerx=background.get_width() // 2,
@@ -60,10 +61,24 @@ class TitleScene(Scene):
         context = world.find_component("context")
 
         screen = context["screen"]
-        background = context["background"]
+
+        # Draw a nice background
+        screen.blit(
+            pygame.image.load(find_data_file("resources/bg_sky-space.png")), (0, 0)
+        )
+        screen.blit(
+            pygame.image.load(find_data_file("resources/bg_cityscape.png")), (0, 500)
+        )
+
+        # Icarus himself
+        sprite = pygame.sprite.Sprite()
+        sprite.image = pygame.image.load(find_data_file("resources/icarus_body.png"))
+        sprite.rect = sprite.image.get_rect()
+        sprite.rect.centerx = 180
+        sprite.rect.centery = screen.get_height() // 2 + 70
+        screen.blit(sprite.image, sprite.rect)
 
         # Blit the text to the screen over top of the background surface
-        screen.blit(background, (0, 0))
         self.title_screen.draw(screen)
 
     def render_previous(self):
