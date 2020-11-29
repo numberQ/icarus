@@ -9,12 +9,14 @@ import scenes.title
 from button import ButtonComponent, render_all_buttons
 from game_events import PAUSE_CONTINUE, PAUSE_QUIT_TO_MENU, PAUSE_SAVE_AND_QUIT
 from scene import Scene, SceneManager
-from utils import APP_AUTHOR, APP_NAME
+from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
 class PauseScene(Scene):
     def __init__(self):
-        self.regular_font = pygame.font.Font(None, 42)
+        self.regular_font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 42
+        )
 
     def setup(self, world):
         context = world.find_component("context")

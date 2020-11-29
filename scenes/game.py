@@ -260,7 +260,9 @@ def calculate_altitude(player, screen):
 
 class GameScene(Scene):
     def __init__(self):
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 36
+        )
 
     def setup(self, world):
 
