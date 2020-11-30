@@ -1,14 +1,18 @@
+import json
 import math
+from os import path
 
 import pygame
+from appdirs import user_data_dir
 from pygame.sprite import Sprite
 
+from common_components import PlayerComponent
 from ecs import Component, System
-from game_events import SCENE_REFOCUS
+from game_events import LOAD, SCENE_REFOCUS
 from scene import Scene, SceneManager
 from scenes.crash_results import CrashResultsScene
 from scenes.pause import PauseScene
-from utils import find_data_file
+from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
 class GraphicComponent(Component):
@@ -262,6 +266,23 @@ def calculate_altitude(player, screen):
     return player.position.y - screen.get_height() + sprite_height
 
 
+def load(world):
+    settings = world.find_component("settings")
+    if path.exists(
+        path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
+    ):
+        with open(
+            path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"]),
+            "r",
+        ) as f:
+            loaded_json = json.load(f)
+            player_entity = world.find_entity("player")
+            player_entity.player.currency = loaded_json["currency"]
+            player_entity.player.hasCloudSleeves = loaded_json["hasCloudSleeves"]
+            player_entity.player.hasWings = loaded_json["hasWings"]
+            player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
+
+
 class GameScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(None, 36)
@@ -269,15 +290,14 @@ class GameScene(Scene):
     def setup(self, world):
 
         # Player entity setup
-        # player_entity = world.gen_entity()
-        player_entity = world.find_entity("player")
+        player_entity = world.gen_entity()
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
         player_entity.attach(PositionComponent(100, 0))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
-        # player_entity.attach(PlayerComponent())
+        player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
 
@@ -315,6 +335,11 @@ class GameScene(Scene):
             if event.type == SCENE_REFOCUS:
                 self.teardown(world)
                 self.setup(world)
+
+        # Loading MUST happen after refocusing
+        for event in events:
+            if event.type == LOAD:
+                load(world)
 
         context = world.find_component("context")
         screen = context["screen"]

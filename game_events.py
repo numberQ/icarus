@@ -12,3 +12,4 @@ EQUIP_BUY_CLOUD_SLEEVES = pygame.event.custom_type()
 EQUIP_BUY_WINGS = pygame.event.custom_type()
 EQUIP_BUY_JET_BOOTS = pygame.event.custom_type()
 QUIT = pygame.QUIT
+LOAD = pygame.event.custom_type()
