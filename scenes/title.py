@@ -101,7 +101,7 @@ class TitleScene(Scene):
         sprite.image = pygame.image.load(find_data_file("resources/object_moon.png"))
         sprite.rect = sprite.image.get_rect()
         sprite.rect.centerx = screen.get_width()
-        sprite.rect.centery = 0
+        sprite.rect.centery = 20
         screen.blit(sprite.image, sprite.rect)
 
         # Blit the text to the screen over top of the background surface
