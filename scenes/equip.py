@@ -21,8 +21,14 @@ from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 class EquipScene(Scene):
     def __init__(self):
-        self.font = pygame.font.Font(None, 36)
-        self.big_font = pygame.font.Font(None, 54)
+        self.font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 36
+        )
+        self.big_font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 58
+        )
+        self.icarus_offset = 0
+        self.icarus_offset_increment = 1
 
     def setup(self, world):
         context = world.find_component("context")
@@ -162,7 +168,7 @@ class EquipScene(Scene):
 
         text = self.big_font.render("Legs:", True, (245, 245, 245))
         screen.blit(text, (120, 480))
-        pygame.draw.line(screen, (245, 245, 245), (120, 518), (220, 518), width=8)
+        pygame.draw.line(screen, (245, 245, 245), (120, 531), (223, 531), width=8)
 
         text = self.font.render("Jet Booster", True, (245, 245, 245))
         screen.blit(text, (180, 572))
@@ -172,11 +178,11 @@ class EquipScene(Scene):
             text = self.font.render(
                 f"Cost: ${settings['jetBootsCost']}", True, (245, 245, 245)
             )
-        screen.blit(text, (180, 600))
+        screen.blit(text, (180, 605))
 
         text = self.big_font.render("Arms:", True, (245, 245, 245))
         screen.blit(text, (640, 480))
-        pygame.draw.line(screen, (245, 245, 245), (640, 518), (750, 518), width=8)
+        pygame.draw.line(screen, (245, 245, 245), (640, 531), (763, 531), width=8)
 
         text = self.font.render("Cloud Sleeves", True, (245, 245, 245))
         screen.blit(text, (700, 572))
@@ -186,7 +192,7 @@ class EquipScene(Scene):
             text = self.font.render(
                 f"Cost: ${settings['cloudSleevesCost']}", True, (245, 245, 245)
             )
-        screen.blit(text, (700, 600))
+        screen.blit(text, (700, 605))
 
         text = self.font.render("Bird Wings", True, (245, 245, 245))
         screen.blit(text, (700, 672))
@@ -196,7 +202,7 @@ class EquipScene(Scene):
             text = self.font.render(
                 f"Cost: ${settings['wingsCost']}", True, (245, 245, 245)
             )
-        screen.blit(text, (700, 700))
+        screen.blit(text, (700, 705))
 
         # Icarus himself
         sprite = pygame.sprite.Sprite()
@@ -204,7 +210,7 @@ class EquipScene(Scene):
         sprite.image = pygame.transform.scale(sprite.image, (288, 200))
         sprite.rect = sprite.image.get_rect()
         sprite.rect.centerx = screen.get_width() // 2
-        sprite.rect.centery = screen.get_height() // 2 - 240
+        sprite.rect.centery = screen.get_height() // 2 - 240 + self.icarus_offset
         screen.blit(sprite.image, sprite.rect)
 
         # Display the buttons
@@ -212,6 +218,11 @@ class EquipScene(Scene):
 
         # Flip display to render lines
         pygame.display.flip()
+
+        self.icarus_offset = self.icarus_offset + self.icarus_offset_increment
+
+        if abs(self.icarus_offset) > 10:
+            self.icarus_offset_increment = self.icarus_offset_increment * -1
 
     def _save(self, save_file, world):
         if not os.path.exists(user_data_dir(APP_NAME, APP_AUTHOR)):

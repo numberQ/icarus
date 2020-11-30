@@ -6,7 +6,9 @@ from utils import find_data_file
 
 # Helper function which creates the surfaces for buttons
 def _create_image(image_path, text, is_disabled, btn_image):
-    font = pygame.font.Font(None, 30)
+    font = pygame.font.Font(
+        find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 27
+    )
     # create a sprite from the given image path
     # and create the rect to blit the text onto
     # if this is for the pressed button, move the rect down to keep the text aligned
