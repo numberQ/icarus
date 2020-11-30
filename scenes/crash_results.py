@@ -103,7 +103,7 @@ class CrashResultsScene(Scene):
                 )
 
                 self.teardown(world)
-                return SceneManager.push(scenes.equip.EquipScene())
+                return SceneManager.replace(scenes.equip.EquipScene())
 
         if exiting:
             world.inject_event(

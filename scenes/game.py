@@ -4,6 +4,7 @@ import pygame
 from pygame.sprite import Sprite
 
 from ecs import Component, System
+from game_events import SCENE_REFOCUS
 from scene import Scene, SceneManager
 from scenes.crash_results import CrashResultsScene
 from scenes.pause import PauseScene
@@ -309,6 +310,12 @@ class GameScene(Scene):
             world.register_system(sys)
 
     def update(self, events, world):
+
+        for event in events:
+            if event.type == SCENE_REFOCUS:
+                self.teardown(world)
+                self.setup(world)
+
         context = world.find_component("context")
         screen = context["screen"]
 
@@ -340,8 +347,8 @@ class GameScene(Scene):
         keys = pygame.key.get_pressed()
 
         # TODO: this is just for debug purposes
-        # if keys[pygame.K_c]:
-        #     player_entity.player.currency = 100000
+        if keys[pygame.K_c]:
+            player_entity.player.currency = 100000
 
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
@@ -365,8 +372,7 @@ class GameScene(Scene):
                     }
                 )
 
-        # We don't want to rotate before jumping.
-        # TODO: or do we?
+        # We don't want to rotate before jumping. TODO: or do we?
         else:
 
             rotation_speed = 1
