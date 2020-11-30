@@ -34,14 +34,16 @@ class MenuScene(Scene):
             path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
         ):
             men.append(("Continue", lambda: post(Event(CONTINUE))))
+        men.append(("Controls", lambda: post(Event(CONTINUE))))
+        men.append(("Credits", lambda: post(Event(CONTINUE))))
         men.append(("Quit", lambda: post(Event(QUIT))))
 
         for idx, m in enumerate(men):
-            offset = -((len(men) * 70) // 2) + 100
+            offset = -((len(men) * 60) // 2) + 140
 
             rect = pygame.Rect(0, 0, 200, 60)
             rect.centerx = background.get_width() // 2
-            rect.centery = background.get_height() // 2 + (offset + (idx * 70))
+            rect.centery = background.get_height() // 2 + (offset + (idx * 60))
 
             button = world.gen_entity()
             button.attach(
