@@ -493,30 +493,30 @@ class GameScene(Scene):
             adjusted_y = entity.position.y - camera.y
             screen.blit(rotated_image, (adjusted_x, adjusted_y))
 
-        # text
-        text = self.font.render(
-            f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 300))
-
-        text = self.font.render(
-            f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 325))
-
-        text = self.font.render(
-            f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 350))
-
-        text = self.font.render(
-            f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
-        )
-        screen.blit(text, (10, 375))
-
-        altitude = calculate_altitude(player_entity, screen)
-        text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
-        screen.blit(text, (10, 450))
+        # # text
+        # text = self.font.render(
+        #     f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 300))
+        #
+        # text = self.font.render(
+        #     f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 325))
+        #
+        # text = self.font.render(
+        #     f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 350))
+        #
+        # text = self.font.render(
+        #     f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
+        # )
+        # screen.blit(text, (10, 375))
+        #
+        # altitude = calculate_altitude(player_entity, screen)
+        # text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
+        # screen.blit(text, (10, 450))
 
         text = self.font.render(
             f"${player_entity.player.currency}", True, (245, 245, 245)
