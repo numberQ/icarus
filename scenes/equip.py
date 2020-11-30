@@ -30,6 +30,7 @@ class EquipScene(Scene):
         settings = world.find_component("settings")
 
         player_entity = world.find_entity("player")
+        player_entity.player.has_jumped = False
 
         # menu setup
         men = []
@@ -135,7 +136,8 @@ class EquipScene(Scene):
                 self.setup(world)
             if event.type == EQUIP_SAVE_AND_START:
                 self._save(settings["save_file"], world)
-                return SceneManager.new_root(GameScene())
+                self.teardown(world)
+                return SceneManager.push(GameScene())
 
         world.process_all_systems(events)
 
@@ -152,7 +154,9 @@ class EquipScene(Scene):
 
         # text
         text = self.font.render(
-            f"Currency: {player_entity.player.currency}", True, (245, 245, 245)
+            f"Money for upgrades: ${player_entity.player.currency}",
+            True,
+            (245, 245, 245),
         )
         screen.blit(text, (50, 50))
 
@@ -166,7 +170,7 @@ class EquipScene(Scene):
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
             text = self.font.render(
-                f"Cost: {settings['jetBootsCost']}", True, (245, 245, 245)
+                f"Cost: ${settings['jetBootsCost']}", True, (245, 245, 245)
             )
         screen.blit(text, (180, 600))
 
@@ -180,7 +184,7 @@ class EquipScene(Scene):
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
             text = self.font.render(
-                f"Cost: {settings['cloudSleevesCost']}", True, (245, 245, 245)
+                f"Cost: ${settings['cloudSleevesCost']}", True, (245, 245, 245)
             )
         screen.blit(text, (700, 600))
 
@@ -190,7 +194,7 @@ class EquipScene(Scene):
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
             text = self.font.render(
-                f"Cost: {settings['wingsCost']}", True, (245, 245, 245)
+                f"Cost: ${settings['wingsCost']}", True, (245, 245, 245)
             )
         screen.blit(text, (700, 700))
 
