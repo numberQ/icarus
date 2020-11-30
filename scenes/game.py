@@ -155,7 +155,10 @@ class MovementSystem(System):
             yy = entity.position.y + math.sin(radians) * speed
 
             # very simplistic gravity
-            yy += 3
+            gravity = 10
+            if entity.player is not None and entity.player.hasCloudSleeves:
+                gravity = 3
+            yy += gravity
 
             entity.position.x = xx
             entity.position.y = yy
@@ -336,6 +339,10 @@ class GameScene(Scene):
 
         keys = pygame.key.get_pressed()
 
+        # TODO: this is just for debug purposes
+        # if keys[pygame.K_c]:
+        #     player_entity.player.currency = 100000
+
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
 
@@ -362,14 +369,18 @@ class GameScene(Scene):
         # TODO: or do we?
         else:
 
+            rotation_speed = 1
+            if player_entity.player.hasWings:
+                rotation_speed = 3
+
             # The player only has direct control over their angle from the ground.
             # Our rudimentary physics takes care of the rest.
             # Also, clamp the angle from straight up to straight down.
             if keys[pygame.K_RIGHT]:
-                angle = player_entity.rotation.angle + 1
+                angle = player_entity.rotation.angle + rotation_speed
                 player_entity.rotation.angle = min(angle, 90)
             if keys[pygame.K_LEFT]:
-                angle = player_entity.rotation.angle - 1
+                angle = player_entity.rotation.angle - rotation_speed
                 player_entity.rotation.angle = max(angle, -90)
 
         for event in events:
@@ -414,22 +425,22 @@ class GameScene(Scene):
         #     f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 300))
-
+        #
         # text = self.font.render(
         #     f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 325))
-
+        #
         # text = self.font.render(
         #     f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 350))
-
+        #
         # text = self.font.render(
         #     f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 375))
-
+        #
         # altitude = calculate_altitude(player_entity, screen)
         # text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
         # screen.blit(text, (10, 450))
