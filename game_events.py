@@ -3,6 +3,7 @@ import pygame
 SCENE_REFOCUS = pygame.event.custom_type()
 NEW_GAME = pygame.event.custom_type()
 CONTINUE = pygame.event.custom_type()
+CONTROLS = pygame.event.custom_type()
 CREDITS = pygame.event.custom_type()
 BACK = pygame.event.custom_type()
 PAUSE_CONTINUE = pygame.event.custom_type()

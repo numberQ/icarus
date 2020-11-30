@@ -7,8 +7,9 @@ from pygame.event import Event, post
 
 from button import ButtonComponent, render_all_buttons
 from common_components import PlayerComponent
-from game_events import CONTINUE, CREDITS, NEW_GAME, QUIT, SCENE_REFOCUS
+from game_events import CONTINUE, CONTROLS, CREDITS, NEW_GAME, QUIT, SCENE_REFOCUS
 from scene import Scene, SceneManager
+from scenes.controls import ControlsScene
 from scenes.credits import CreditsScene
 from scenes.equip import EquipScene
 from scenes.game import GameScene
@@ -35,7 +36,7 @@ class MenuScene(Scene):
             path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
         ):
             men.append(("Continue", lambda: post(Event(CONTINUE))))
-        men.append(("Controls", lambda: post(Event(CONTINUE))))
+        men.append(("Controls", lambda: post(Event(CONTROLS))))
         men.append(("Credits", lambda: post(Event(CREDITS))))
         men.append(("Quit", lambda: post(Event(QUIT))))
 
@@ -85,6 +86,9 @@ class MenuScene(Scene):
                         player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
                 self.teardown(world)
                 return SceneManager.push(EquipScene())
+            if event.type == CONTROLS:
+                self._transition_away_from(events, world)
+                return SceneManager.push(ControlsScene())
             if event.type == CREDITS:
                 self._transition_away_from(events, world)
                 return SceneManager.push(CreditsScene())
