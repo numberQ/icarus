@@ -30,7 +30,7 @@ def main():
     screen = pygame.display.set_mode(
         (settings["height"], settings["width"]), flags=flags, vsync=1
     )
-    pygame.display.set_caption(settings["title"])
+    pygame.display.set_caption(settings["title"] + ": " + settings["subtitle"])
 
     # Store our dynamic resources that are created at runtime in the game world
     background = pygame.Surface(screen.get_size())

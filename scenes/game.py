@@ -309,9 +309,22 @@ def load(world):
 
 class GameScene(Scene):
     def __init__(self):
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 36
+        )
 
     def setup(self, world):
+        context = world.find_component("context")
+        screen = context["screen"]
+
+        # Create a sprite for the title
+        self.help_message = pygame.sprite.Sprite()
+        self.help_message.image = self.font.render(
+            "Press space to start flying", 1, (240, 240, 240)
+        )
+        self.help_message.rect = self.help_message.image.get_rect(
+            centerx=screen.get_width() // 2, centery=screen.get_height() // 2
+        )
 
         # Player entity setup
         player_entity = world.gen_entity()
@@ -522,6 +535,9 @@ class GameScene(Scene):
             f"${player_entity.player.currency}", True, (245, 245, 245)
         )
         screen.blit(text, (50, 50))
+
+        if not player_entity.player.has_jumped:
+            screen.blit(self.help_message.image, self.help_message.rect)
 
     def render_previous(self):
         return False
