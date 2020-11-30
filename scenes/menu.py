@@ -7,8 +7,9 @@ from pygame.event import Event, post
 
 from button import ButtonComponent, render_all_buttons
 from common_components import PlayerComponent
-from game_events import CONTINUE, NEW_GAME, QUIT
+from game_events import CONTINUE, CREDITS, NEW_GAME, QUIT, SCENE_REFOCUS
 from scene import Scene, SceneManager
+from scenes.credits import CreditsScene
 from scenes.equip import EquipScene
 from scenes.game import GameScene
 from utils import APP_AUTHOR, APP_NAME
@@ -35,7 +36,7 @@ class MenuScene(Scene):
         ):
             men.append(("Continue", lambda: post(Event(CONTINUE))))
         men.append(("Controls", lambda: post(Event(CONTINUE))))
-        men.append(("Credits", lambda: post(Event(CONTINUE))))
+        men.append(("Credits", lambda: post(Event(CREDITS))))
         men.append(("Quit", lambda: post(Event(QUIT))))
 
         for idx, m in enumerate(men):
@@ -56,6 +57,8 @@ class MenuScene(Scene):
 
     def update(self, events, world):
         for event in events:
+            if event.type == SCENE_REFOCUS:
+                self._transition_back_to(events, world)
             if event.type == NEW_GAME:
                 return SceneManager.new_root(GameScene())
             if event.type == CONTINUE:
@@ -82,10 +85,29 @@ class MenuScene(Scene):
                         player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
                 self.teardown(world)
                 return SceneManager.push(EquipScene())
+            if event.type == CREDITS:
+                self._transition_away_from(events, world)
+                return SceneManager.push(CreditsScene())
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return SceneManager.pop()
 
         world.process_all_systems(events)
+
+    # This helps us hide things we want when we push a new scene
+    def _transition_away_from(self, events, world):
+        buttons = world.filter("button")
+
+        for button in buttons:
+            btn = button["button"]
+            btn["rect"].centery += 5000
+
+    # This helps us get everything back in the right spot when we transition back to our scene
+    def _transition_back_to(self, events, world):
+        buttons = world.filter("button")
+
+        for button in buttons:
+            btn = button["button"]
+            btn["rect"].centery -= 5000
 
     def render(self, world):
         context = world.find_component("context")
