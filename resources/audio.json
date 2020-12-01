@@ -1,5 +1,6 @@
 {
   "background_music": "resources/Heroic Adventure.ogg",
   "click": "resources/click_004.ogg",
-  "rollover": "resources/click_002.ogg"
+  "rollover": "resources/click_002.ogg",
+  "collect": "resources/tone2.ogg"
 }

@@ -1,6 +1,7 @@
 import json
 import math
 from os import path
+import random
 
 import pygame
 from appdirs import user_data_dir
@@ -279,9 +280,34 @@ class CameraComponent(Component):
 
 class CollectableSystem(System):
     def __init__(self):
+        self.offscreen_slots = []
         super().__init__()
 
+        screen_info = pygame.display.Info()
+        self.x_slot_size = 150
+        self.y_slot_size = 75
+
+        # Special case where we immediately need collectables on screen for the player to collect
+        num_x_slots = screen_info.current_w // self.x_slot_size
+        num_y_slots = screen_info.current_h // self.y_slot_size
+
+        self.screen_slots = []
+        for x_slot in range(num_x_slots):
+            for y_slot in range(num_y_slots):
+                self.screen_slots.append((x_slot, y_slot))
+
+        # Slots to spawn new collectables off screen
+        num_x_slots = 300 // self.x_slot_size
+        num_y_slots = (screen_info.current_h + 200) // self.y_slot_size
+
+        self.offscreen_slots = []
+        for x_slot in range(num_x_slots):
+            for y_slot in range(num_y_slots):
+                self.offscreen_slots.append((x_slot, y_slot))
+
+
     def process(self, events, world):
+        screen = world.find_component("context")["screen"]
         camera = world.find_component("camera")
         player = world.get(camera["target_entity_id"])
 
@@ -296,7 +322,49 @@ class CollectableSystem(System):
             collision = pygame.sprite.collide_rect(player.graphic.sprite, collectable.graphic.sprite)
             if collision:
                 player.player.currency += collectable.collectable.worth
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "play",
+                        "sound": "collect",
+                    }
+                )
                 to_remove.append(collectable)
+
+        # Remove old collectables that have been scrolled past
+        for collectable in collectables:
+            if collectable.position.x < camera.x - 200:
+                to_remove.append(collectable)
+
+        # Create new collectables
+        current_collectables = len(collectables) - len(to_remove)
+        total_collectables = 15
+        need_collectables = total_collectables - current_collectables
+        
+        collectable_spawners = [create_cloud, create_bird, create_plane]
+
+        # Divide the screen up into a grid of unused "slots" where we can place 
+        if current_collectables == 0:
+            all_slots = self.screen_slots
+        else:
+            all_slots = self.offscreen_slots
+
+        chosen_slots = random.sample(all_slots, k=need_collectables)
+
+        for i in range(need_collectables):
+            spawner = random.choices(collectable_spawners, weights=(60, 30, 10), k=1)[0]
+            
+            x_slot, y_slot = chosen_slots[i]
+
+            # Special case where we immediately need collectables on screen for the player to collect
+            if (current_collectables == 0):
+                x = camera.x + (x_slot * self.x_slot_size)
+                y = camera.y + (y_slot * self.y_slot_size)
+            else:
+                # Spawn these new collectables off screen
+                x = camera.x + screen.get_width() + (x_slot * self.x_slot_size)
+                y = camera.y - 100 + (y_slot * self.y_slot_size)
+            spawner(world.gen_entity(), (x, y))
         
         # Remove all the collectables that are due for cleanup
         world.remove_entities(to_remove)
@@ -440,11 +508,6 @@ class GameScene(Scene):
         # Create the camera
         camera_entity = world.gen_entity()
         camera_entity.attach(CameraComponent(player_entity.id))
-
-        # Create collectables
-        create_cloud(world.gen_entity(), (100, 100))
-        create_bird(world.gen_entity(), (200, 200))
-        create_plane(world.gen_entity(), (300, 300))
 
         # System registration
         self.systems = [

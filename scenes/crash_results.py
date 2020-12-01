@@ -159,5 +159,7 @@ class CrashResultsScene(Scene):
 
     def teardown(self, world):
         buttons = world.filter("button")
+        collectables = world.filter("collectable")
 
         world.remove_entities(buttons)
+        world.remove_entities(collectables)
