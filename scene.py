@@ -59,7 +59,8 @@ class SceneManager:
             pass
         elif scene_switch["type"] == SceneSwitch.Pop:
             self.scenes.pop().teardown(world)
-            pygame.event.post(pygame.event.Event(game_events.SCENE_REFOCUS))
+            if scene_switch["refocus"]:
+                pygame.event.post(pygame.event.Event(game_events.SCENE_REFOCUS))
         elif scene_switch["type"] == SceneSwitch.Push:
             scene = scene_switch["scene"]
             scene.setup(world)
@@ -101,8 +102,8 @@ class SceneManager:
         return {"type": SceneSwitch.Nothing}
 
     @staticmethod
-    def pop():
-        return {"type": SceneSwitch.Pop}
+    def pop(refocus: bool = True):
+        return {"type": SceneSwitch.Pop, "refocus": refocus}
 
     @staticmethod
     def push(scene):
