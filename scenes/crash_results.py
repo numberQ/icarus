@@ -10,16 +10,16 @@ import scenes.title
 from button import ButtonComponent, render_all_buttons
 from game_events import PAUSE_QUIT_TO_MENU, PAUSE_SAVE_AND_QUIT
 from scene import Scene, SceneManager
-from utils import APP_AUTHOR, APP_NAME
+from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
 class CrashResultsScene(Scene):
     def __init__(self):
         self.regular_font = pygame.font.Font(
-            "resources/dpcomic-font/DpcomicRegular-p3jD.ttf", 42
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 42
         )
         self.huge_font = pygame.font.Font(
-            "resources/dpcomic-font/DpcomicRegular-p3jD.ttf", 80
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 80
         )
 
     def setup(self, world):

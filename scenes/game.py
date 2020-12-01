@@ -252,6 +252,12 @@ class BackgroundComponent(Component):
         }
         Component.__init__(self, "background", metadata)
 
+class CollectableComponent(Component):
+    def __init__(self, worth):
+        metadata = {
+            "worth": worth,
+        }
+        Component.__init__(self, "collectable", metadata)
 
 class PlayerSprite(Sprite):
     def __init__(self, image_path):
@@ -270,6 +276,31 @@ class CameraComponent(Component):
         }
         Component.__init__(self, "camera", metadata)
 
+
+class CollectableSystem(System):
+    def __init__(self):
+        super().__init__()
+
+    def process(self, events, world):
+        camera = world.find_component("camera")
+        player = world.get(camera["target_entity_id"])
+
+        collectables = world.filter("collectable")
+
+        # Update player's sprite rect so we can use pygame's collision detection
+        player.graphic.sprite.rect = player.graphic.sprite.image.get_rect(x=player.position.x, y=player.position.y)
+
+        to_remove = []
+        
+        for collectable in collectables:
+            collision = pygame.sprite.collide_rect(player.graphic.sprite, collectable.graphic.sprite)
+            if collision:
+                player.player.currency += collectable.collectable.worth
+                to_remove.append(collectable)
+        
+        # Remove all the collectables that are due for cleanup
+        world.remove_entities(to_remove)
+                
 
 class CameraSystem(System):
     def __init__(self):
@@ -332,6 +363,36 @@ def load(world):
                 player_entity.player.numBoosts = player_entity.player.maxBoosts
 
 
+def create_cloud(entity, position):
+    entity.attach(CollectableComponent(100))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_cloud.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
+def create_bird(entity, position):
+    entity.attach(CollectableComponent(200))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_bird.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
+def create_plane(entity, position):
+    entity.attach(CollectableComponent(500))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_plane.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
 class GameScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(
@@ -380,6 +441,11 @@ class GameScene(Scene):
         camera_entity = world.gen_entity()
         camera_entity.attach(CameraComponent(player_entity.id))
 
+        # Create collectables
+        create_cloud(world.gen_entity(), (100, 100))
+        create_bird(world.gen_entity(), (200, 200))
+        create_plane(world.gen_entity(), (300, 300))
+
         # System registration
         self.systems = [
             PhysicsFrameResetSystem(),
@@ -387,6 +453,7 @@ class GameScene(Scene):
             MovementSystem(),
             GlidingSystem(),
             CameraSystem(),
+            CollectableSystem(),
         ]
         for sys in self.systems:
             world.register_system(sys)
