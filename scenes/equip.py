@@ -319,7 +319,9 @@ class EquipScene(Scene):
         )
         screen.blit(text, (640, 714))
         text = self.small_font.render(
-            "Hold shift to turn like you didn't have wings.", True, (230, 200, 85)
+            "If you want to pretend you don't have wings, hold shift.",
+            True,
+            (230, 200, 85),
         )
         screen.blit(text, (640, 744))
 
