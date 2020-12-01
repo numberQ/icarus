@@ -1,5 +1,6 @@
 import json
 import math
+import random
 from os import path
 
 import pygame
@@ -253,6 +254,14 @@ class BackgroundComponent(Component):
         Component.__init__(self, "background", metadata)
 
 
+class CollectableComponent(Component):
+    def __init__(self, worth):
+        metadata = {
+            "worth": worth,
+        }
+        Component.__init__(self, "collectable", metadata)
+
+
 class PlayerSprite(Sprite):
     def __init__(self, image_path):
         Sprite.__init__(self)
@@ -269,6 +278,101 @@ class CameraComponent(Component):
             "y": 0,
         }
         Component.__init__(self, "camera", metadata)
+
+
+class CollectableSystem(System):
+    def __init__(self):
+        self.offscreen_slots = []
+        super().__init__()
+
+        screen_info = pygame.display.Info()
+        self.x_slot_size = 150
+        self.y_slot_size = 75
+
+        # Special case where we immediately need collectables on screen for the player to collect
+        num_x_slots = screen_info.current_w // self.x_slot_size
+        num_y_slots = screen_info.current_h // self.y_slot_size
+
+        self.screen_slots = []
+        for x_slot in range(num_x_slots):
+            for y_slot in range(num_y_slots):
+                self.screen_slots.append((x_slot, y_slot))
+
+        # Slots to spawn new collectables off screen
+        num_x_slots = 300 // self.x_slot_size
+        num_y_slots = (screen_info.current_h + 200) // self.y_slot_size
+
+        self.offscreen_slots = []
+        for x_slot in range(num_x_slots):
+            for y_slot in range(num_y_slots):
+                self.offscreen_slots.append((x_slot, y_slot))
+
+    def process(self, events, world):
+        screen = world.find_component("context")["screen"]
+        camera = world.find_component("camera")
+        player = world.get(camera["target_entity_id"])
+
+        collectables = world.filter("collectable")
+
+        # Update player's sprite rect so we can use pygame's collision detection
+        player.graphic.sprite.rect = player.graphic.sprite.image.get_rect(
+            x=player.position.x, y=player.position.y
+        )
+
+        to_remove = []
+
+        for collectable in collectables:
+            collision = pygame.sprite.collide_rect(
+                player.graphic.sprite, collectable.graphic.sprite
+            )
+            if collision:
+                player.player.currency += collectable.collectable.worth
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "play",
+                        "sound": "collect",
+                    }
+                )
+                to_remove.append(collectable)
+
+        # Remove old collectables that have been scrolled past
+        for collectable in collectables:
+            if collectable.position.x < camera.x - 200:
+                to_remove.append(collectable)
+
+        # Create new collectables
+        current_collectables = len(collectables) - len(to_remove)
+        total_collectables = 10
+        need_collectables = total_collectables - current_collectables
+
+        collectable_spawners = [create_cloud, create_bird, create_plane]
+
+        # Divide the screen up into a grid of unused "slots" where we can place
+        if current_collectables == 0:
+            all_slots = self.screen_slots
+        else:
+            all_slots = self.offscreen_slots
+
+        chosen_slots = random.sample(all_slots, k=need_collectables)
+
+        for i in range(need_collectables):
+            spawner = random.choices(collectable_spawners, weights=(60, 30, 10), k=1)[0]
+
+            x_slot, y_slot = chosen_slots[i]
+
+            # Special case where we immediately need collectables on screen for the player to collect
+            if current_collectables == 0:
+                x = camera.x + (x_slot * self.x_slot_size)
+                y = camera.y + (y_slot * self.y_slot_size)
+            else:
+                # Spawn these new collectables off screen
+                x = camera.x + screen.get_width() + (x_slot * self.x_slot_size)
+                y = camera.y - 100 + (y_slot * self.y_slot_size)
+            spawner(world.gen_entity(), (x, y))
+
+        # Remove all the collectables that are due for cleanup
+        world.remove_entities(to_remove)
 
 
 class CameraSystem(System):
@@ -332,6 +436,36 @@ def load(world):
                 player_entity.player.numBoosts = player_entity.player.maxBoosts
 
 
+def create_cloud(entity, position):
+    entity.attach(CollectableComponent(100))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_cloud.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
+def create_bird(entity, position):
+    entity.attach(CollectableComponent(200))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_bird.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
+def create_plane(entity, position):
+    entity.attach(CollectableComponent(300))
+    entity.attach(PositionComponent(position[0], position[1]))
+    entity.attach(RotationComponent(0))
+    sprite = pygame.sprite.Sprite()
+    sprite.image = pygame.image.load(find_data_file("resources/object_plane.png"))
+    sprite.rect = sprite.image.get_rect(x=position[0], y=position[1])
+    entity.attach(GraphicComponent(sprite))
+
+
 class GameScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(
@@ -387,6 +521,7 @@ class GameScene(Scene):
             MovementSystem(),
             GlidingSystem(),
             CameraSystem(),
+            CollectableSystem(),
         ]
         for sys in self.systems:
             world.register_system(sys)
