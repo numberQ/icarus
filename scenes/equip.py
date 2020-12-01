@@ -183,7 +183,7 @@ class EquipScene(Scene):
                 self.teardown(world)
                 self.setup(world)
             if event.type == EQUIP_BUY_MORE_FUEL:
-                self._shop(settings["extraFuelCost"], "extra_fuel", world)
+                self._shop(self.extra_fuel_cost, "extra_fuel", world)
                 self.teardown(world)
                 self.setup(world)
             if event.type == EQUIP_SAVE_AND_START:
