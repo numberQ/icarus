@@ -9,10 +9,11 @@ from pygame.sprite import Sprite
 
 from common_components import PlayerComponent
 from ecs import Component, System
-from game_events import LOAD, SCENE_REFOCUS
+from game_events import LOAD, SCENE_REFOCUS, VICTORY
 from scene import Scene, SceneManager
 from scenes.crash_results import CrashResultsScene
 from scenes.pause import PauseScene
+from scenes.victory import VictoryScene
 from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
@@ -379,6 +380,42 @@ class CollectableSystem(System):
         world.remove_entities(to_remove)
 
 
+class MoonComponent(Component):
+    def __init__(self):
+        Component.__init__(self, "moon", {})
+
+
+class MoonSystem(System):
+    def __init__(self):
+        super().__init__()
+
+    def process(self, events, world):
+
+        context = world.find_component("context")
+        screen = context["screen"]
+
+        moon = world.find_entity("moon")
+        player = world.find_entity("player")
+
+        moon.position.x = (
+            player.position.x + screen.get_width() - 200 - player.position.x / 80
+        )
+        moon.position.x = max(
+            moon.position.x, player.position.x - moon.graphic.sprite.rect.width / 5
+        )
+
+        # Update the moon's rect for proper collision detection
+        moon.graphic.sprite.rect = moon.graphic.sprite.image.get_rect(
+            x=moon.position.x, y=moon.position.y
+        )
+
+        collision = pygame.sprite.collide_rect(
+            player.graphic.sprite, moon.graphic.sprite
+        )
+        if collision:
+            pygame.event.post(pygame.event.Event(VICTORY))
+
+
 class CameraSystem(System):
     def __init__(self):
         super().__init__()
@@ -518,6 +555,20 @@ class GameScene(Scene):
         camera_entity = world.gen_entity()
         camera_entity.attach(CameraComponent(player_entity.id))
 
+        # Spawn the moon
+        moon_entity = world.gen_entity()
+        moon_entity.attach(PositionComponent(screen.get_width() - 100, -2500))
+        moon_entity.attach(RotationComponent(0))
+        moon_sprite = pygame.sprite.Sprite()
+        moon_sprite.image = pygame.image.load(
+            find_data_file("resources/object_moon.png")
+        )
+        moon_sprite.image.get_rect().x = moon_entity.position.x
+        moon_sprite.image.get_rect().y = moon_entity.position.y
+        moon_sprite.rect = moon_sprite.image.get_rect()
+        moon_entity.attach(GraphicComponent(moon_sprite))
+        moon_entity.attach(MoonComponent())
+
         # System registration
         self.systems = [
             PhysicsFrameResetSystem(),
@@ -526,6 +577,7 @@ class GameScene(Scene):
             GlidingSystem(),
             CameraSystem(),
             CollectableSystem(),
+            MoonSystem(),
         ]
         for sys in self.systems:
             world.register_system(sys)
@@ -533,6 +585,9 @@ class GameScene(Scene):
     def update(self, events, world):
 
         for event in events:
+            if event.type == VICTORY:
+                return SceneManager.replace(VictoryScene())
+
             if event.type == SCENE_REFOCUS:
                 self.teardown(world)
                 self.setup(world)
@@ -591,6 +646,10 @@ class GameScene(Scene):
 
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
+
+        # # Win button for debugging
+        # if keys[pygame.K_v]:
+        #     pygame.event.post(pygame.event.Event(VICTORY))
 
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
@@ -723,7 +782,13 @@ class GameScene(Scene):
         # text = self.font.render(f"x: {player_entity.position.x}", True, (10, 10, 10))
         # screen.blit(text, (10, 400))
         #
-        # text = self.font.render(f"y: {player_entity.position.y}", True, (10, 10, 10))
+        # text = self.font.render(f"cam x: {camera.x}", True, (10, 10, 10))
+        # screen.blit(text, (10, 425))
+        #
+        # text = self.font.render(f"moon x: {world.find_entity('moon').position.x}", True, (10, 10, 10))
+        # screen.blit(text, (10, 450))
+        #
+        # text = self.font.render(f"y: {player_entity.position.y} | {camera.y}", True, (10, 10, 10))
         # screen.blit(text, (10, 425))
         #
         # altitude = calculate_altitude(player_entity, screen)
@@ -753,13 +818,16 @@ class GameScene(Scene):
         return False
 
     def teardown(self, world):
-        player = world.find_entity("player")
-        camera = world.find_entity("camera")
 
-        if player is not None:
-            world.remove_entities([player, camera])
-        else:
-            world.remove_entities([camera])
+        entities_to_remove = [
+            world.find_entity("player"),
+            world.find_entity("camera"),
+            world.find_entity("moon"),
+        ]
+
+        world.remove_entities(
+            [entity for entity in entities_to_remove if entity is not None]
+        )
 
         for sys in self.systems:
             world.unregister_system(sys)
