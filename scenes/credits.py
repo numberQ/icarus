@@ -73,10 +73,15 @@ class CreditsScene(Scene):
         prod.rect = prod.image.get_rect(centerx=screen.get_width() // 2, centery=470)
         screen.blit(prod.image, prod.rect)
 
-        text = self.font.render("Audio and Button sprites from:", True, (245, 245, 245))
+        text = self.font.render("Sound fx and buttons:", True, (245, 245, 245))
         screen.blit(text, (screen.get_width() // 4, 570))
         text = self.font.render("kenney.nl", True, (245, 245, 245))
         screen.blit(text, (screen.get_width() // 4, 610))
+
+        text = self.font.render("Music:", True, (245, 245, 245))
+        screen.blit(text, (screen.get_width() // 2 + 60, 570))
+        text = self.font.render("freepd.com", True, (245, 245, 245))
+        screen.blit(text, (screen.get_width() // 2 + 60, 610))
 
         text = self.font.render("Fonts Used:", True, (245, 245, 245))
         screen.blit(text, (screen.get_width() // 4, 660))

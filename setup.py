@@ -29,8 +29,8 @@ if sys.platform == "win32":
 
 setup(
     name="Icarus",
-    version="0.2",
-    description="My GUI application!",
+    version="1.0",
+    description="Shoot for the moon",
     options={
         "build_exe": build_exe_options,
         "bdist_msi": bdist_msi_options,
