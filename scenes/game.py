@@ -334,6 +334,10 @@ class CollectableSystem(System):
                         "sound": "collect",
                     }
                 )
+                # If we hit a plane, add a boost back to icarus
+                if collectable.collectable.worth == 300:
+                    if player.player.numBoosts < player.player.maxBoosts:
+                        player.player.numBoosts += 1
                 to_remove.append(collectable)
 
         # Remove old collectables that have been scrolled past
