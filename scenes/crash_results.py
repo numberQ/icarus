@@ -149,6 +149,7 @@ class CrashResultsScene(Scene):
             "hasCloudSleeves": player_entity.player.hasCloudSleeves,
             "hasWings": player_entity.player.hasWings,
             "hasJetBoots": player_entity.player.hasJetBoots,
+            "extraFuel": player_entity.player.extraFuel,
         }
         f.write(json.dumps(out))
         f.close()
