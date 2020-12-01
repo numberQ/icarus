@@ -17,3 +17,4 @@ EQUIP_BUY_JET_BOOTS = pygame.event.custom_type()
 EQUIP_BUY_MORE_FUEL = pygame.event.custom_type()
 QUIT = pygame.QUIT
 LOAD = pygame.event.custom_type()
+VICTORY = pygame.event.custom_type()
