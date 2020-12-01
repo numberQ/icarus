@@ -21,7 +21,7 @@ class ControlsScene(Scene):
 
         rect = pygame.Rect(0, 0, 190, 49)
         rect.centerx = background.get_width() // 2
-        rect.centery = background.get_height() // 2 + 100
+        rect.centery = background.get_height() // 2 + 140
 
         button = world.gen_entity()
         button.attach(
@@ -43,7 +43,7 @@ class ControlsScene(Scene):
         context = world.find_component("context")
         screen = context["screen"]
 
-        surf = pygame.Surface((screen.get_width() // 2 - 30, 170))
+        surf = pygame.Surface((screen.get_width() // 2 - 30, 210))
         screen.blit(surf, (screen.get_width() // 4 + 15, screen.get_height() // 2 - 30))
 
         text = self.font.render(
@@ -51,10 +51,11 @@ class ControlsScene(Scene):
         )
         screen.blit(text, (screen.get_width() // 4 + 25, screen.get_height() // 2 - 20))
 
-        text = self.font.render(
-            "Press space to boost with the jet booster.", True, (245, 245, 245)
-        )
+        text = self.font.render("Don't crash into the ground.", True, (245, 245, 245))
         screen.blit(text, (screen.get_width() // 4 + 25, screen.get_height() // 2 + 20))
+
+        text = self.font.render("Shoot for the moon.", True, (245, 245, 245))
+        screen.blit(text, (screen.get_width() // 4 + 25, screen.get_height() // 2 + 60))
 
         # Display the buttons
         render_all_buttons(screen, world)

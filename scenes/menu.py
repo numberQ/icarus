@@ -33,7 +33,7 @@ class MenuScene(Scene):
             path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
         ):
             men.append(("Continue", lambda: post(Event(CONTINUE))))
-        men.append(("Controls", lambda: post(Event(CONTROLS))))
+        men.append(("How to Play", lambda: post(Event(CONTROLS))))
         men.append(("Credits", lambda: post(Event(CREDITS))))
         men.append(("Quit", lambda: post(Event(QUIT))))
 
