@@ -66,8 +66,8 @@ class SceneManager:
             self.scenes.append(scene)
         elif scene_switch["type"] == SceneSwitch.Replace:
             scene = scene_switch["scene"]
-            scene.setup(world)
             self.scenes.pop().teardown(world)
+            scene.setup(world)
             self.scenes.append(scene)
         elif scene_switch["type"] == SceneSwitch.New_Root:
             scene = scene_switch["scene"]

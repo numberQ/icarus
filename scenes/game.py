@@ -1,13 +1,18 @@
+import json
 import math
+from os import path
 
 import pygame
+from appdirs import user_data_dir
 from pygame.sprite import Sprite
 
+from common_components import PlayerComponent
 from ecs import Component, System
+from game_events import LOAD, SCENE_REFOCUS
 from scene import Scene, SceneManager
 from scenes.crash_results import CrashResultsScene
 from scenes.pause import PauseScene
-from utils import find_data_file
+from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
 class GraphicComponent(Component):
@@ -148,14 +153,41 @@ class MovementSystem(System):
         physics_entities = set(world.filter("physics"))
 
         for entity in physics_entities:
-            radians = math.radians(entity.physics.angle)
+
+            if abs(entity.physics.velocity) < 2:
+
+                # At a certain point, approach 0 faster than normal drag would. This makes the game feel better.
+                drag_magnitude = entity.physics.velocity / 50
+
+            else:
+
+                min_cross_section = 0.1
+                max_cross_section = 0.75
+                cross_sectional_area = min_cross_section + (
+                    max_cross_section - min_cross_section
+                ) * math.sin(math.radians(entity.rotation.angle - entity.physics.angle))
+                # Aerodynamic drag equation
+                drag_magnitude = (
+                    0.5  # Drag magnitude is always divided by 2
+                    * 1.2  # Drag coefficient (varies by material)
+                    * 1.22  # Air density (1.22 in normal atmospheric conditions)
+                    * cross_sectional_area
+                    * pow(entity.physics.velocity, 2)
+                    / 62  # Entity weight
+                ) * math.copysign(1, entity.physics.velocity)
+
+            entity.physics.velocity -= drag_magnitude
             speed = entity.physics.velocity
+            radians = math.radians(entity.physics.angle)
 
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
             # very simplistic gravity
-            yy += 3
+            gravity = 10
+            if entity.player is not None and entity.player.hasCloudSleeves:
+                gravity = 5
+            yy += gravity
 
             entity.position.x = xx
             entity.position.y = yy
@@ -258,6 +290,23 @@ def calculate_altitude(player, screen):
     return player.position.y - screen.get_height() + sprite_height
 
 
+def load(world):
+    settings = world.find_component("settings")
+    if path.exists(
+        path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"])
+    ):
+        with open(
+            path.join(user_data_dir(APP_NAME, APP_AUTHOR), settings["save_file"]),
+            "r",
+        ) as f:
+            loaded_json = json.load(f)
+            player_entity = world.find_entity("player")
+            player_entity.player.currency = loaded_json["currency"]
+            player_entity.player.hasCloudSleeves = loaded_json["hasCloudSleeves"]
+            player_entity.player.hasWings = loaded_json["hasWings"]
+            player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
+
+
 class GameScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(
@@ -278,15 +327,14 @@ class GameScene(Scene):
         )
 
         # Player entity setup
-        # player_entity = world.gen_entity()
-        player_entity = world.find_entity("player")
+        player_entity = world.gen_entity()
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
         player_entity.attach(PositionComponent(100, 0))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(0))
-        # player_entity.attach(PlayerComponent())
+        player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
 
@@ -319,6 +367,17 @@ class GameScene(Scene):
             world.register_system(sys)
 
     def update(self, events, world):
+
+        for event in events:
+            if event.type == SCENE_REFOCUS:
+                self.teardown(world)
+                self.setup(world)
+
+        # Loading MUST happen after refocusing
+        for event in events:
+            if event.type == LOAD:
+                load(world)
+
         context = world.find_component("context")
         screen = context["screen"]
 
@@ -348,6 +407,11 @@ class GameScene(Scene):
         world.process_all_systems(events)
 
         keys = pygame.key.get_pressed()
+        mods = pygame.key.get_mods()
+
+        # TODO: this is just for debug purposes
+        if keys[pygame.K_c]:
+            player_entity.player.currency = 100000
 
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
@@ -359,7 +423,7 @@ class GameScene(Scene):
 
                 # The jump itself
                 world.inject_event(
-                    {"type": "physics_force", "magnitude": 5, "angle": -20}
+                    {"type": "physics_force", "magnitude": 10, "angle": -20}
                 )
 
                 # Start background music
@@ -371,19 +435,39 @@ class GameScene(Scene):
                     }
                 )
 
-        # We don't want to rotate before jumping.
-        # TODO: or do we?
+        # We don't want to rotate before jumping. TODO: or do we?
         else:
+
+            rotation_speed = 1
+            if player_entity.player.hasWings and not mods & pygame.KMOD_SHIFT:
+                rotation_speed = 3
 
             # The player only has direct control over their angle from the ground.
             # Our rudimentary physics takes care of the rest.
             # Also, clamp the angle from straight up to straight down.
             if keys[pygame.K_RIGHT]:
-                angle = player_entity.rotation.angle + 1
+                angle = player_entity.rotation.angle + rotation_speed
                 player_entity.rotation.angle = min(angle, 90)
             if keys[pygame.K_LEFT]:
-                angle = player_entity.rotation.angle - 1
+                angle = player_entity.rotation.angle - rotation_speed
                 player_entity.rotation.angle = max(angle, -90)
+
+            for event in events:
+                if (
+                    event.type == pygame.KEYDOWN
+                    and event.key == pygame.K_SPACE
+                    and player_entity.player.has_jumped
+                    and player_entity.player.hasJetBoots
+                    and player_entity.player.numBoosts > 0
+                ):
+                    player_entity.player.numBoosts -= 1
+                    world.inject_event(
+                        {
+                            "type": "physics_force",
+                            "magnitude": 50,
+                            "angle": player_entity.rotation.angle,
+                        }
+                    )
 
         for event in events:
             # Use keyup here as a simple way to only trigger once and not repeatedly
@@ -427,22 +511,22 @@ class GameScene(Scene):
         #     f"image angle: {player_entity.rotation.angle}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 300))
-
+        #
         # text = self.font.render(
         #     f"vel angle: {player_entity.physics.angle}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 325))
-
+        #
         # text = self.font.render(
         #     f"vel magnitude: {player_entity.physics.velocity}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 350))
-
+        #
         # text = self.font.render(
         #     f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 375))
-
+        #
         # altitude = calculate_altitude(player_entity, screen)
         # text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
         # screen.blit(text, (10, 450))

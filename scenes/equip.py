@@ -13,9 +13,9 @@ from game_events import (
     EQUIP_BUY_WINGS,
     EQUIP_QUIT,
     EQUIP_SAVE_AND_START,
+    LOAD,
 )
 from scene import Scene, SceneManager
-from scenes.game import GameScene
 from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
@@ -143,7 +143,8 @@ class EquipScene(Scene):
             if event.type == EQUIP_SAVE_AND_START:
                 self._save(settings["save_file"], world)
                 self.teardown(world)
-                return SceneManager.push(GameScene())
+                post(Event(LOAD))
+                return SceneManager.pop()
 
         world.process_all_systems(events)
 
