@@ -38,6 +38,8 @@ class PlayerComponent(Component):
             "hasCloudSleeves": 0,
             "hasWings": 0,
             "hasJetBoots": 0,
-            "numBoosts": 3,
+            "extraFuel": 0,
+            "maxBoosts": 0,
+            "numBoosts": 0,
         }
         Component.__init__(self, "player", metadata)

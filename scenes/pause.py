@@ -64,10 +64,10 @@ class PauseScene(Scene):
         for event in events:
             if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
                 context["paused"] = False
-                return SceneManager.pop()
+                return SceneManager.pop(False)
             elif event.type == PAUSE_CONTINUE:
                 context["paused"] = False
-                return SceneManager.pop()
+                return SceneManager.pop(False)
             elif event.type == PAUSE_SAVE_AND_QUIT:
                 self._save(settings["save_file"], world)
                 context["paused"] = False
@@ -116,6 +116,7 @@ class PauseScene(Scene):
             "hasCloudSleeves": player_entity.player.hasCloudSleeves,
             "hasWings": player_entity.player.hasWings,
             "hasJetBoots": player_entity.player.hasJetBoots,
+            "extraFuel": player_entity.player.extraFuel,
         }
         f.write(json.dumps(out))
         f.close()

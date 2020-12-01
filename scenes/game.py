@@ -325,6 +325,11 @@ def load(world):
             player_entity.player.hasCloudSleeves = loaded_json["hasCloudSleeves"]
             player_entity.player.hasWings = loaded_json["hasWings"]
             player_entity.player.hasJetBoots = loaded_json["hasJetBoots"]
+            player_entity.player.extraFuel = loaded_json["extraFuel"]
+
+            if player_entity.player.hasJetBoots:
+                player_entity.player.maxBoosts = 1 + player_entity.player.extraFuel
+                player_entity.player.numBoosts = player_entity.player.maxBoosts
 
 
 class GameScene(Scene):
@@ -429,10 +434,6 @@ class GameScene(Scene):
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
 
-        # TODO: this is just for debug purposes
-        if keys[pygame.K_c]:
-            player_entity.player.currency = 100000
-
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
 
@@ -504,6 +505,10 @@ class GameScene(Scene):
             if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
                 return SceneManager.push(PauseScene())
 
+            # This is just for debug purposes
+            # if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+            #     player_entity.player.currency += 1000
+
     def render(self, world):
         context = world.find_component("context")
         screen = context["screen"]
@@ -571,6 +576,17 @@ class GameScene(Scene):
             f"${player_entity.player.currency}", True, (245, 245, 245)
         )
         screen.blit(text, (50, 50))
+
+        if player_entity.player.maxBoosts > 0:
+            text = self.font.render("Boosts: ", True, (245, 245, 245))
+            screen.blit(text, (50, 85))
+
+            for i in range(player_entity.player.numBoosts):
+                pygame.draw.circle(screen, (220, 40, 10), (160 + i * 25, 102), 10)
+            for i in range(
+                player_entity.player.numBoosts, player_entity.player.maxBoosts
+            ):
+                pygame.draw.circle(screen, (128, 128, 128), (160 + i * 25, 102), 10, 3)
 
         if not player_entity.player.has_jumped:
             screen.blit(self.help_message.image, self.help_message.rect)

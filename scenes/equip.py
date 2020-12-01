@@ -10,6 +10,7 @@ from button import ButtonComponent, render_all_buttons
 from game_events import (
     EQUIP_BUY_CLOUD_SLEEVES,
     EQUIP_BUY_JET_BOOTS,
+    EQUIP_BUY_MORE_FUEL,
     EQUIP_BUY_WINGS,
     EQUIP_QUIT,
     EQUIP_SAVE_AND_START,
@@ -27,8 +28,13 @@ class EquipScene(Scene):
         self.big_font = pygame.font.Font(
             find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 58
         )
+        self.small_font = pygame.font.Font(
+            find_data_file("resources/dpcomic-font/DpcomicRegular-p3jD.ttf"), 28
+        )
         self.icarus_offset = 0
         self.icarus_offset_increment = 1
+
+        self.extra_fuel_cost = 0
 
     def setup(self, world):
         context = world.find_component("context")
@@ -37,6 +43,11 @@ class EquipScene(Scene):
 
         player_entity = world.find_entity("player")
         player_entity.player.has_jumped = False
+
+        self.extra_fuel_cost = (
+            settings["extraFuelCost"]
+            + settings["extraFuelCost"] * player_entity.player.extraFuel // 2
+        )
 
         # menu setup
         men = []
@@ -73,6 +84,30 @@ class EquipScene(Scene):
                 ),
                 image="resources/checkmark.png"
                 if player_entity.player.hasJetBoots == 1
+                else None,
+            )
+        )
+
+        rect = pygame.Rect(120, 660, 49, 49)
+        more_fuel_button = world.gen_entity()
+        more_fuel_button.attach(
+            ButtonComponent(
+                rect,
+                "Buy" if player_entity.player.extraFuel < 9 else "",
+                lambda: post(Event(EQUIP_BUY_MORE_FUEL)),
+                is_small=True,
+                is_disabled=(
+                    (
+                        player_entity.player.currency < self.extra_fuel_cost
+                        and player_entity.player.hasJetBoots == 1
+                    )
+                    or player_entity.player.hasJetBoots == 0
+                    or player_entity.player.extraFuel == 9
+                ),
+                image="resources/locked.png"
+                if player_entity.player.hasJetBoots == 0
+                else "resources/checkmark.png"
+                if player_entity.player.extraFuel == 9
                 else None,
             )
         )
@@ -140,6 +175,10 @@ class EquipScene(Scene):
                 self._shop(settings["jetBootsCost"], "jet_boots", world)
                 self.teardown(world)
                 self.setup(world)
+            if event.type == EQUIP_BUY_MORE_FUEL:
+                self._shop(settings["extraFuelCost"], "extra_fuel", world)
+                self.teardown(world)
+                self.setup(world)
             if event.type == EQUIP_SAVE_AND_START:
                 self._save(settings["save_file"], world)
                 self.teardown(world)
@@ -172,38 +211,94 @@ class EquipScene(Scene):
         pygame.draw.line(screen, (245, 245, 245), (120, 531), (223, 531), width=8)
 
         text = self.font.render("Jet Booster", True, (245, 245, 245))
-        screen.blit(text, (180, 572))
+        screen.blit(text, (180, 550))
         if player_entity.player.hasJetBoots == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
-            text = self.font.render(
-                f"Cost: ${settings['jetBootsCost']}", True, (245, 245, 245)
+            text_color = (
+                (120, 250, 40)
+                if player_entity.player.currency >= settings["jetBootsCost"]
+                else (170, 200, 200)
             )
-        screen.blit(text, (180, 605))
+            text = self.font.render(
+                f"Cost: ${settings['jetBootsCost']}", True, text_color
+            )
+        screen.blit(text, (180, 582))
+        text = self.small_font.render(
+            "Press space to give yourself a boost!", True, (230, 200, 85)
+        )
+        screen.blit(text, (120, 614))
+
+        text = self.font.render("More Fuel", True, (245, 245, 245))
+        screen.blit(text, (180, 650))
+        if player_entity.player.extraFuel == 9:
+            text = self.font.render("Maxed Out", True, (245, 245, 245))
+        else:
+            text_color = (
+                (120, 250, 40)
+                if player_entity.player.currency >= self.extra_fuel_cost
+                else (170, 200, 200)
+            )
+            text = self.font.render(f"Cost: ${self.extra_fuel_cost}", True, text_color)
+        screen.blit(text, (180, 682))
+        # TODO
+        text = self.small_font.render(
+            "More fuel means more boosting!", True, (230, 200, 85)
+        )
+        screen.blit(text, (120, 714))
+        if player_entity.player.hasJetBoots > 0:
+            text = self.small_font.render(
+                f"Total boosts: {player_entity.player.extraFuel + 1}{'! Wow!' if player_entity.player.extraFuel == 9 else ''}",
+                True,
+                (220, 40, 10),
+            )
+            screen.blit(text, (120, 744))
 
         text = self.big_font.render("Arms:", True, (245, 245, 245))
         screen.blit(text, (640, 480))
         pygame.draw.line(screen, (245, 245, 245), (640, 531), (763, 531), width=8)
 
         text = self.font.render("Cloud Sleeves", True, (245, 245, 245))
-        screen.blit(text, (700, 572))
+        screen.blit(text, (700, 550))
         if player_entity.player.hasCloudSleeves == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
-            text = self.font.render(
-                f"Cost: ${settings['cloudSleevesCost']}", True, (245, 245, 245)
+            text_color = (
+                (120, 250, 40)
+                if player_entity.player.currency >= settings["cloudSleevesCost"]
+                else (170, 200, 200)
             )
-        screen.blit(text, (700, 605))
+            text = self.font.render(
+                f"Cost: ${settings['cloudSleevesCost']}", True, text_color
+            )
+        screen.blit(text, (700, 582))
+        text = self.small_font.render(
+            "Don't let gravity get you down!", True, (230, 200, 85)
+        )
+        screen.blit(text, (640, 614))
 
         text = self.font.render("Bird Wings", True, (245, 245, 245))
-        screen.blit(text, (700, 672))
+        screen.blit(text, (700, 650))
         if player_entity.player.hasWings == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
-            text = self.font.render(
-                f"Cost: ${settings['wingsCost']}", True, (245, 245, 245)
+            text_color = (
+                (120, 250, 40)
+                if player_entity.player.currency >= settings["wingsCost"]
+                else (170, 200, 200)
             )
-        screen.blit(text, (700, 705))
+            text = self.font.render(f"Cost: ${settings['wingsCost']}", True, text_color)
+        screen.blit(text, (700, 682))
+        text = self.small_font.render(
+            "Make tighter turns! Y'know, like a bird. Just go with it.",
+            True,
+            (230, 200, 85),
+        )
+        screen.blit(text, (640, 714))
+        text = self.small_font.render(
+            "Hold shift to turn like you didn't have wings.", True, (230, 200, 85)
+        )
+        screen.blit(text, (640, 744))
 
         # Icarus himself
         sprite = pygame.sprite.Sprite()
@@ -235,6 +330,7 @@ class EquipScene(Scene):
             "hasCloudSleeves": player_entity.player.hasCloudSleeves,
             "hasWings": player_entity.player.hasWings,
             "hasJetBoots": player_entity.player.hasJetBoots,
+            "extraFuel": player_entity.player.extraFuel,
         }
         f.write(json.dumps(out))
         f.close()
@@ -251,6 +347,8 @@ class EquipScene(Scene):
                 player_entity.player.hasWings = 1
             if item == "jet_boots":
                 player_entity.player.hasJetBoots = 1
+            if item == "extra_fuel":
+                player_entity.player.extraFuel += 1
 
     def render_previous(self):
         return False
