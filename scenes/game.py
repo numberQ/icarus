@@ -338,7 +338,7 @@ class CollectableSystem(System):
 
         # Create new collectables
         current_collectables = len(collectables) - len(to_remove)
-        total_collectables = 15
+        total_collectables = 10
         need_collectables = total_collectables - current_collectables
         
         collectable_spawners = [create_cloud, create_bird, create_plane]
@@ -452,7 +452,7 @@ def create_bird(entity, position):
 
 
 def create_plane(entity, position):
-    entity.attach(CollectableComponent(500))
+    entity.attach(CollectableComponent(300))
     entity.attach(PositionComponent(position[0], position[1]))
     entity.attach(RotationComponent(0))
     sprite = pygame.sprite.Sprite()
