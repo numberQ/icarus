@@ -33,6 +33,7 @@ class PlayerComponent(Component):
     def __init__(self):
         metadata = {
             "has_jumped": False,
+            "jumping": False,
             "currency": 0,
             "hasCloudSleeves": 0,
             "hasWings": 0,
