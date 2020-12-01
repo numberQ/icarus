@@ -102,6 +102,15 @@ class MenuScene(Scene):
         return True
 
     def teardown(self, world):
+
+        world.inject_event(
+            {
+                "type": "sound",
+                "action": "stop",
+                "sound": "title_music",
+            }
+        )
+
         buttons = world.filter("button")
 
         world.remove_entities(buttons)

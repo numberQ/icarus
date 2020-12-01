@@ -56,6 +56,16 @@ class TitleScene(Scene):
         self.title_screen.add(self.title, self.subtitle, self.push_anything)
 
     def update(self, events, world):
+
+        # Start music loop
+        world.inject_event(
+            {
+                "type": "sound",
+                "action": "start",
+                "sound": "title_music",
+            }
+        )
+
         # Run all the systems registered in the world
         world.process_all_systems(events)
 
