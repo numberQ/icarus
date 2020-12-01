@@ -1,5 +1,8 @@
 {
   "background_music": "resources/Heroic Adventure.ogg",
   "click": "resources/click_004.ogg",
-  "rollover": "resources/click_002.ogg"
+  "crash": "resources/Crash.ogg",
+  "rollover": "resources/click_002.ogg",
+  "shop_music": "resources/Hopeful.ogg",
+  "title_music": "resources/Inventing Flight.ogg"
 }

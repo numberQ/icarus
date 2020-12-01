@@ -425,6 +425,25 @@ class GameScene(Scene):
             world.inject_event({"type": "move"})
 
             if calculate_altitude(player_entity, screen) > 0:
+
+                # allow the deafening silence to emphasize the player's deadly mistake
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "stop",
+                        "sound": "background_music",
+                    }
+                )
+
+                # also make a funny sound effect
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "play",
+                        "sound": "crash",
+                    }
+                )
+
                 for sys in self.systems:
                     world.unregister_system(sys)
                 return SceneManager.push(CrashResultsScene())

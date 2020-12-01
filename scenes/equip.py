@@ -162,6 +162,13 @@ class EquipScene(Scene):
 
         for event in events:
             if event.type == EQUIP_QUIT:
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "stop",
+                        "sound": "shop_music",
+                    }
+                )
                 return SceneManager.new_root(scenes.title.TitleScene())
             if event.type == EQUIP_BUY_CLOUD_SLEEVES:
                 self._shop(settings["cloudSleevesCost"], "cloud_sleeves", world)
@@ -180,12 +187,28 @@ class EquipScene(Scene):
                 self.teardown(world)
                 self.setup(world)
             if event.type == EQUIP_SAVE_AND_START:
+                world.inject_event(
+                    {
+                        "type": "sound",
+                        "action": "stop",
+                        "sound": "shop_music",
+                    }
+                )
                 self._save(settings["save_file"], world)
                 self.teardown(world)
                 post(Event(LOAD))
                 return SceneManager.pop()
 
         world.process_all_systems(events)
+
+        # start music
+        world.inject_event(
+            {
+                "type": "sound",
+                "action": "start",
+                "sound": "shop_music",
+            }
+        )
 
     def render(self, world):
         context = world.find_component("context")
