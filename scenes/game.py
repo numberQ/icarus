@@ -577,13 +577,16 @@ class GameScene(Scene):
         )
         screen.blit(text, (50, 50))
 
-        text = self.font.render("Boosts: ", True, (245, 245, 245))
-        screen.blit(text, (50, 85))
+        if player_entity.player.maxBoosts > 0:
+            text = self.font.render("Boosts: ", True, (245, 245, 245))
+            screen.blit(text, (50, 85))
 
-        for i in range(player_entity.player.numBoosts):
-            pygame.draw.circle(screen, (220, 40, 10), (160 + i * 25, 102), 10)
-        for i in range(player_entity.player.numBoosts, player_entity.player.maxBoosts):
-            pygame.draw.circle(screen, (128, 128, 128), (160 + i * 25, 102), 10, 3)
+            for i in range(player_entity.player.numBoosts):
+                pygame.draw.circle(screen, (220, 40, 10), (160 + i * 25, 102), 10)
+            for i in range(
+                player_entity.player.numBoosts, player_entity.player.maxBoosts
+            ):
+                pygame.draw.circle(screen, (128, 128, 128), (160 + i * 25, 102), 10, 3)
 
         if not player_entity.player.has_jumped:
             screen.blit(self.help_message.image, self.help_message.rect)
