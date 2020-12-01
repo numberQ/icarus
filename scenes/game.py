@@ -150,43 +150,57 @@ class MovementSystem(System):
         if not events:
             return
 
+        context = world.find_component("context")
+        screen = context["screen"]
+
         physics_entities = set(world.filter("physics"))
 
         for entity in physics_entities:
 
-            if abs(entity.physics.velocity) < 2:
+            in_space = calculate_altitude(entity, screen) < -2200
 
-                # At a certain point, approach 0 faster than normal drag would. This makes the game feel better.
-                drag_magnitude = entity.physics.velocity / 50
+            min_cross_section = 0.1
+            max_cross_section = 0.75
+            cross_sectional_area = min_cross_section + (
+                max_cross_section - min_cross_section
+            ) * math.sin(math.radians(entity.rotation.angle - entity.physics.angle))
 
-            else:
+            # Drag coefficient helps determine the force of drag, and varies by material
+            drag_coeff = 0.9
+            if entity.player is not None and entity.player.hasCloudSleeves:
+                drag_coeff = 0.3
 
-                min_cross_section = 0.1
-                max_cross_section = 0.75
-                cross_sectional_area = min_cross_section + (
-                    max_cross_section - min_cross_section
-                ) * math.sin(math.radians(entity.rotation.angle - entity.physics.angle))
-                # Aerodynamic drag equation
-                drag_magnitude = (
-                    0.5  # Drag magnitude is always divided by 2
-                    * 1.2  # Drag coefficient (varies by material)
-                    * 1.22  # Air density (1.22 in normal atmospheric conditions)
-                    * cross_sectional_area
-                    * pow(entity.physics.velocity, 2)
-                    / 62  # Entity weight
-                ) * math.copysign(1, entity.physics.velocity)
+            # The higher you are, the less resistance the atmosphere provides
+            air_density = 1.22
+            if in_space:
+                air_density = 0.9
 
+            # Aerodynamic drag equation
+            drag_magnitude = (
+                0.5  # Drag magnitude is always divided by 2
+                * drag_coeff
+                * air_density
+                * cross_sectional_area
+                * pow(entity.physics.velocity, 2)
+                / 62  # Entity weight
+            ) * math.copysign(1, entity.physics.velocity)
+
+            radians = math.radians(entity.physics.angle)
+
+            drag_magnitude *= abs(math.sin(radians))
             entity.physics.velocity -= drag_magnitude
             speed = entity.physics.velocity
-            radians = math.radians(entity.physics.angle)
 
             xx = entity.position.x + math.cos(radians) * speed
             yy = entity.position.y + math.sin(radians) * speed
 
             # very simplistic gravity
-            gravity = 10
+            gravity = 8
             if entity.player is not None and entity.player.hasCloudSleeves:
-                gravity = 5
+                gravity = 4
+
+            if in_space:
+                gravity = 1
             yy += gravity
 
             entity.position.x = xx
@@ -197,7 +211,7 @@ class GlidingSystem(System):
     def __init__(self):
         super().__init__()
         self.subscribe("glide")
-        self.angle_magnitude = 0.1
+        self.angle_magnitude = 0.5
 
     def process(self, events, world):
         if world.find_component("context")["paused"]:
@@ -213,10 +227,16 @@ class GlidingSystem(System):
         # All gliders should have physics and rotation components
         for glider in gliders:
 
-            # Trig math requires radians, so let's convert
             angle = glider.rotation.angle
             radians = math.radians(angle)
             magnitude = math.sin(radians) * self.angle_magnitude
+
+            # Since the angle can only every be -90 to 90 (i.e., the right half of the unit plane),
+            # negative magnitude means a force pushing towards the left half of the unit plane.
+            # That doesn't feel very good in the game, though - so let's cut the player a break
+            # and make forward velocity stronger than backwards velocity.
+            if magnitude < 0:
+                magnitude /= 4
 
             world.inject_event(
                 {"type": "physics_force", "magnitude": magnitude, "angle": angle}
@@ -331,9 +351,9 @@ class GameScene(Scene):
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
-        player_entity.attach(PositionComponent(100, 0))
+        player_entity.attach(PositionComponent(100, 100))
         player_entity.attach(PhysicsComponent())
-        player_entity.attach(RotationComponent(0))
+        player_entity.attach(RotationComponent(-20))
         player_entity.attach(PlayerComponent())
         player_entity.attach(GlidingComponent())
         player_entity.attach(GravityComponent())
@@ -373,7 +393,7 @@ class GameScene(Scene):
                 self.teardown(world)
                 self.setup(world)
 
-        # Loading MUST happen after refocusing
+        # Loading should happen only AFTER refocusing, if both events have fired this frame
         for event in events:
             if event.type == LOAD:
                 load(world)
@@ -416,14 +436,15 @@ class GameScene(Scene):
         # Before doing anything else, the player must jump off the cliff
         if not player_entity.player.has_jumped:
 
-            if keys[pygame.K_SPACE]:
+            if keys[pygame.K_SPACE] and not player_entity.player.jumping:
 
                 # Tell everyone we've jumped
                 player_entity.player.has_jumped = True
+                player_entity.player.jumping = True
 
                 # The jump itself
                 world.inject_event(
-                    {"type": "physics_force", "magnitude": 10, "angle": -20}
+                    {"type": "physics_force", "magnitude": 20, "angle": -20}
                 )
 
                 # Start background music
@@ -438,17 +459,25 @@ class GameScene(Scene):
         # We don't want to rotate before jumping. TODO: or do we?
         else:
 
+            if player_entity.player.jumping:
+                player_entity.rotation.angle += 0.5
+                if player_entity.rotation.angle > 0:
+                    player_entity.player.jumping = False
+
             rotation_speed = 1
+            # If you have the wings upgrade, you can use shift to go back to slower rotation
             if player_entity.player.hasWings and not mods & pygame.KMOD_SHIFT:
-                rotation_speed = 3
+                rotation_speed = 2
 
             # The player only has direct control over their angle from the ground.
             # Our rudimentary physics takes care of the rest.
             # Also, clamp the angle from straight up to straight down.
             if keys[pygame.K_RIGHT]:
+                player_entity.player.jumping = False
                 angle = player_entity.rotation.angle + rotation_speed
                 player_entity.rotation.angle = min(angle, 90)
             if keys[pygame.K_LEFT]:
+                player_entity.player.jumping = False
                 angle = player_entity.rotation.angle - rotation_speed
                 player_entity.rotation.angle = max(angle, -90)
 
@@ -460,11 +489,12 @@ class GameScene(Scene):
                     and player_entity.player.hasJetBoots
                     and player_entity.player.numBoosts > 0
                 ):
+                    player_entity.player.jumping = False
                     player_entity.player.numBoosts -= 1
                     world.inject_event(
                         {
                             "type": "physics_force",
-                            "magnitude": 50,
+                            "magnitude": 15,
                             "angle": player_entity.rotation.angle,
                         }
                     )
@@ -526,6 +556,12 @@ class GameScene(Scene):
         #     f"acc: {player_entity.physics.acceleration}", True, (10, 10, 10)
         # )
         # screen.blit(text, (10, 375))
+        #
+        # text = self.font.render(f"x: {player_entity.position.x}", True, (10, 10, 10))
+        # screen.blit(text, (10, 400))
+        #
+        # text = self.font.render(f"y: {player_entity.position.y}", True, (10, 10, 10))
+        # screen.blit(text, (10, 425))
         #
         # altitude = calculate_altitude(player_entity, screen)
         # text = self.font.render(f"altitude: {altitude}", True, (10, 10, 10))
