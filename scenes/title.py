@@ -103,7 +103,7 @@ class TitleScene(Scene):
         sprite.image = pygame.image.load(find_data_file("resources/icarus_body.png"))
         sprite.rect = sprite.image.get_rect()
         sprite.rect.centerx = 180
-        sprite.rect.centery = screen.get_height() // 2 + 70 + (self.icarus_offset // 3)
+        sprite.rect.centery = screen.get_height() // 2 + 190 + (self.icarus_offset // 3)
         screen.blit(sprite.image, sprite.rect)
 
         # Moon's hot

@@ -444,15 +444,19 @@ class CameraSystem(System):
 
         if camera.x < 0:
             camera.x = 0
-        if camera.y > 0:
-            camera.y = 0
+
+        # TODO: must come up with a better way to handle this than hardcoding 192, to allow screen resizing
+        if camera.y > 192:
+            camera.y = 192
+
         if camera.y < -2540:
             camera.y = -2540
 
 
 def calculate_altitude(player, screen):
     sprite_height = player.graphic.sprite.image.get_height()
-    return player.position.y - screen.get_height() + sprite_height
+    # TODO: must come up with a better way to handle this than hardcoding 960, to allow screen resizing
+    return player.position.y - 960 + sprite_height
 
 
 def load(world):
@@ -531,7 +535,7 @@ class GameScene(Scene):
         player_entity.attach(
             GraphicComponent(PlayerSprite("resources/icarus_body.png"))
         )
-        player_entity.attach(PositionComponent(100, 100))
+        player_entity.attach(PositionComponent(160, 486))
         player_entity.attach(PhysicsComponent())
         player_entity.attach(RotationComponent(-20))
         player_entity.attach(PlayerComponent())

@@ -2,12 +2,12 @@
   "metadata": {
     "cloudSleevesCost": 100,
     "extraFuelCost": 5000,
-    "height": 1280,
+    "height": 1366,
     "jetBootsCost": 3500,
     "save_file": "icarus.json",
     "subtitle": "Shoot for the Moon",
     "title": "Icarus",
-    "width": 960,
+    "width": 720,
     "wingsCost": 2000
   },
   "metatype": "settings"
