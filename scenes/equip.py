@@ -20,6 +20,8 @@ from scene import Scene, SceneManager
 from utils import APP_AUTHOR, APP_NAME, find_data_file
 
 
+# TODO: Anywhere in here you see 200 subtracted from a y-value, that's because we don't support dynamic screen sizing.
+# TODO: Once we do, all that will have to change. This is just a quick and dirty fix for now.
 class EquipScene(Scene):
     def __init__(self):
         self.font = pygame.font.Font(
@@ -70,7 +72,7 @@ class EquipScene(Scene):
                 )
             )
 
-        rect = pygame.Rect(120, 560, 49, 49)
+        rect = pygame.Rect(120, 560 - 200, 49, 49)
         jet_boots_button = world.gen_entity()
         jet_boots_button.attach(
             ButtonComponent(
@@ -88,7 +90,7 @@ class EquipScene(Scene):
             )
         )
 
-        rect = pygame.Rect(120, 660, 49, 49)
+        rect = pygame.Rect(120, 660 - 200, 49, 49)
         more_fuel_button = world.gen_entity()
         more_fuel_button.attach(
             ButtonComponent(
@@ -112,7 +114,7 @@ class EquipScene(Scene):
             )
         )
 
-        rect = pygame.Rect(640, 560, 49, 49)
+        rect = pygame.Rect(640, 560 - 200, 49, 49)
         cloud_sleeves_button = world.gen_entity()
         cloud_sleeves_button.attach(
             ButtonComponent(
@@ -130,7 +132,7 @@ class EquipScene(Scene):
             )
         )
 
-        rect = pygame.Rect(640, 660, 49, 49)
+        rect = pygame.Rect(640, 660 - 200, 49, 49)
         wings_button = world.gen_entity()
         wings_button.attach(
             ButtonComponent(
@@ -230,11 +232,13 @@ class EquipScene(Scene):
         screen.blit(text, (50, 50))
 
         text = self.big_font.render("Legs:", True, (245, 245, 245))
-        screen.blit(text, (120, 480))
-        pygame.draw.line(screen, (245, 245, 245), (120, 531), (223, 531), width=8)
+        screen.blit(text, (120, 480 - 200))
+        pygame.draw.line(
+            screen, (245, 245, 245), (120, 531 - 200), (223, 531 - 200), width=8
+        )
 
         text = self.font.render("Jet Booster", True, (245, 245, 245))
-        screen.blit(text, (180, 550))
+        screen.blit(text, (180, 550 - 200))
         if player_entity.player.hasJetBoots == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
@@ -246,14 +250,14 @@ class EquipScene(Scene):
             text = self.font.render(
                 f"Cost: ${settings['jetBootsCost']}", True, text_color
             )
-        screen.blit(text, (180, 582))
+        screen.blit(text, (180, 582 - 200))
         text = self.small_font.render(
             "Press space to give yourself a boost!", True, (230, 200, 85)
         )
-        screen.blit(text, (120, 614))
+        screen.blit(text, (120, 614 - 200))
 
         text = self.font.render("More Fuel", True, (245, 245, 245))
-        screen.blit(text, (180, 650))
+        screen.blit(text, (180, 650 - 200))
         if player_entity.player.extraFuel == 9:
             text = self.font.render("Maxed Out", True, (245, 245, 245))
         else:
@@ -263,26 +267,27 @@ class EquipScene(Scene):
                 else (170, 200, 200)
             )
             text = self.font.render(f"Cost: ${self.extra_fuel_cost}", True, text_color)
-        screen.blit(text, (180, 682))
-        # TODO
+        screen.blit(text, (180, 682 - 200))
         text = self.small_font.render(
             "More fuel means more boosting!", True, (230, 200, 85)
         )
-        screen.blit(text, (120, 714))
+        screen.blit(text, (120, 714 - 200))
         if player_entity.player.hasJetBoots > 0:
             text = self.small_font.render(
                 f"Total boosts: {player_entity.player.extraFuel + 1}{'! Wow!' if player_entity.player.extraFuel == 9 else ''}",
                 True,
                 (220, 40, 10),
             )
-            screen.blit(text, (120, 744))
+            screen.blit(text, (120, 744 - 200))
 
         text = self.big_font.render("Arms:", True, (245, 245, 245))
-        screen.blit(text, (640, 480))
-        pygame.draw.line(screen, (245, 245, 245), (640, 531), (763, 531), width=8)
+        screen.blit(text, (640, 480 - 200))
+        pygame.draw.line(
+            screen, (245, 245, 245), (640, 531 - 200), (763, 531 - 200), width=8
+        )
 
         text = self.font.render("Cloud Sleeves", True, (245, 245, 245))
-        screen.blit(text, (700, 550))
+        screen.blit(text, (700, 550 - 200))
         if player_entity.player.hasCloudSleeves == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
@@ -294,14 +299,14 @@ class EquipScene(Scene):
             text = self.font.render(
                 f"Cost: ${settings['cloudSleevesCost']}", True, text_color
             )
-        screen.blit(text, (700, 582))
+        screen.blit(text, (700, 582 - 200))
         text = self.small_font.render(
             "Don't let gravity get you down!", True, (230, 200, 85)
         )
-        screen.blit(text, (640, 614))
+        screen.blit(text, (640, 614 - 200))
 
         text = self.font.render("Bird Wings", True, (245, 245, 245))
-        screen.blit(text, (700, 650))
+        screen.blit(text, (700, 650 - 200))
         if player_entity.player.hasWings == 1:
             text = self.font.render("Owned", True, (245, 245, 245))
         else:
@@ -311,19 +316,19 @@ class EquipScene(Scene):
                 else (170, 200, 200)
             )
             text = self.font.render(f"Cost: ${settings['wingsCost']}", True, text_color)
-        screen.blit(text, (700, 682))
+        screen.blit(text, (700, 682 - 200))
         text = self.small_font.render(
             "Make tighter turns! Y'know, like a bird. Just go with it.",
             True,
             (230, 200, 85),
         )
-        screen.blit(text, (640, 714))
+        screen.blit(text, (640, 714 - 200))
         text = self.small_font.render(
             "If you want to pretend you don't have wings, hold shift.",
             True,
             (230, 200, 85),
         )
-        screen.blit(text, (640, 744))
+        screen.blit(text, (640, 744 - 200))
 
         # Icarus himself
         sprite = pygame.sprite.Sprite()
@@ -331,7 +336,7 @@ class EquipScene(Scene):
         sprite.image = pygame.transform.scale(sprite.image, (288, 200))
         sprite.rect = sprite.image.get_rect()
         sprite.rect.centerx = screen.get_width() // 2
-        sprite.rect.centery = screen.get_height() // 2 - 240 + self.icarus_offset
+        sprite.rect.centery = screen.get_height() // 2 - 200 + self.icarus_offset
         screen.blit(sprite.image, sprite.rect)
 
         # Display the buttons

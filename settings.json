@@ -7,7 +7,7 @@
     "save_file": "icarus.json",
     "subtitle": "Shoot for the Moon",
     "title": "Icarus",
-    "width": 960,
+    "width": 720,
     "wingsCost": 2000
   },
   "metatype": "settings"

@@ -30,7 +30,7 @@ class VictoryScene(Scene):
         victory_text = pygame.sprite.Sprite()
         victory_text.image = self.victory_font.render("VICTORY", True, (240, 240, 240))
         victory_text.rect = victory_text.image.get_rect(
-            centerx=background.get_width() // 2, centery=160
+            centerx=background.get_width() // 2, centery=110
         )
 
         self.victory_screen.add(victory_text)
@@ -42,7 +42,7 @@ class VictoryScene(Scene):
             (185, 185, 185),
         )
         sub_text.rect = sub_text.image.get_rect(
-            centerx=background.get_width() // 2, centery=250
+            centerx=background.get_width() // 2, centery=190
         )
 
         self.victory_screen.add(sub_text)
@@ -100,7 +100,7 @@ class VictoryScene(Scene):
         )
         moon_sprite.rect = moon_sprite.image.get_rect()
         moon_sprite.rect.centerx = screen.get_width() / 2
-        moon_sprite.rect.centery = screen.get_height() / 2
+        moon_sprite.rect.centery = screen.get_height() / 2 + 30
         screen.blit(moon_sprite.image, moon_sprite.rect)
 
         # Sub text backing box
@@ -109,7 +109,7 @@ class VictoryScene(Scene):
             (10, 10, 10),
             [
                 screen.get_width() // 2 - 300,
-                250 - 15 - 10,  # text y position - half font height - buffer
+                190 - 15 - 10,  # text y position - half font height - buffer
                 600,
                 50,
             ],
